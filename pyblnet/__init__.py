@@ -11,12 +11,53 @@ import re
 from sre_compile import isstring
 from builtins import int
 from test.test_binop import isint
+import socket
+import ipaddress
+
+"""
+def detect_blnet(subnet = socket.gethostbyname(socket.getfqdn())):
+    '''
+    Detects a blnet in the local network and returns its ip
+    NOT WORKING IN MY NETWORK
+    Attributes:
+        subnet    the subnet to search for the blnet
+    Returns:
+        ip address of BLNET or None if none found
+    '''
+    # iterate through local network in search for blnet
+    net4 = ipaddress.ip_network(subnet)
+    print(list(net4.hosts()))
+    for pos_ip in net4.hosts():
+        print('Testing '+ str(pos_ip))
+        if test_blnet(str(pos_ip)):
+            return pos_ip
+    return None
+"""
+            
+def test_blnet(ip):
+    '''
+    Tests whether an BLNET answers under given ip
+    Attributes:
+        ip      IP of the BLNET
+    '''
+    if "http://" not in ip and "https://" not in ip:
+        ip = "http://" + ip
+    r = requests.get(ip)
+    # Parse  DOM object from HTMLCode
+    dom = htmldom.HtmlDom().createDom(r.text)
+    # either a 'Zugriff verweigert' message is shown
+    if 'BL-Net Zugang verweigert' in dom.find('title').text():
+        return True
+    # or (more often) the BL-NET Menü
+    if 'BL-NET' in dom.find('div#head').text():
+        return True
+    return False
 
 class BLNET(object):
     '''
     Interface to communicate with the UVR1611 over his web surface (BL-Net)
     Attributes:
-        ip         The ip of the UVR1611/BL-Net to connect to
+        ip         The ip/domain of the UVR1611/BL-Net to connect to
         password   the password to log into the web interface provided
     '''
     ip = ""
@@ -24,16 +65,20 @@ class BLNET(object):
     password = ""
     current_taid = "" # TAID cookie in the form 'TAID="EEEE"'
 
-    def __init__(self, ip, password = _def_password):
+    def __init__(self, ip = False, password = _def_password):
         '''
         Constructor
         '''
-       
-        if "http://" not in ip :
+        # if ip is omitted, search for UVR yourself
+        #if not ip: ip = detect_blnet() - not working yet
+        if "http://" not in ip and "https://" not in ip:
             ip = "http://" + ip
+        if not test_blnet(ip): 
+            raise ValueError('No BLNET found under given address')
         self.ip = ip
         self.password = password
-
+        
+    
     def logged_in(self):
         '''
         Determines whether the object is still connected to the BLNET
@@ -43,6 +88,8 @@ class BLNET(object):
         # we have sent one (if our cookie is the current one this
         # would be the case)
         r = requests.get(
+            # restricted page is chosen to be small in data
+            # so that it can be quickly loaded
             self.ip + "/par.htm?blp=A1200101&1238653",
             headers = self.cookie_header()
             )
@@ -59,6 +106,7 @@ class BLNET(object):
         '''
         Logs into the BLNET interface, renews the TAID
         '''
+        if self.logged_in(): return True
         payload = {
             'blu' : 1, # log in as experte
             'blp' : self.password,
@@ -78,6 +126,7 @@ class BLNET(object):
             if self.logged_in():
                 return True
         return False
+        
     
     def log_out(self):
         '''
@@ -88,11 +137,28 @@ class BLNET(object):
              headers = self.cookie_header())
         return not self.logged_in()
     
+    def set_node(self, node):
+        '''
+        Selects the node at which the UVR of interest lies
+        future requests will be sent at this particular UVR
+        '''
+        # ensure to be logged in
+        if not self.log_in(): return None
+        
+        # send the request to change the node
+        r = requests.get(
+            self.ip + "/can.htm?blaA=" + str(node),
+            headers = self.cookie_header())
+        # return whether we we're still logged in => setting went well
+        return r.headers.get('Set-Cookie') != None
+    
     def read_analog_values(self):
         '''
         Reads all analog values (temperatures, speeds) from the web interface
         and returns list of quadruples of id, name, value, unit of measurement
         '''
+        # ensure to be logged in
+        if not self.log_in(): return None
         # create a HTMLParser for later
         h = html.parser.HTMLParser()
         
@@ -113,7 +179,7 @@ class BLNET(object):
         # search for data by regular expression
         match_iter = re.finditer(
             "&nbsp;(?P<id>\d+):&nbsp;(?P<name>.+)\n" +
-            "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(?P<value>\d+,\d+) " +
+            "(&nbsp;){3,6}(?P<value>\d+,\d+) " +
             "(?P<unit_of_measurement>.+?) &nbsp;&nbsp;PAR?", 
             data_raw)
         match = next(match_iter, False)
@@ -123,6 +189,8 @@ class BLNET(object):
             # convert html entities to unicode characters
             for key in match_dict.keys():
                 match_dict[key] = h.unescape(match_dict[key])
+                # also replace decimal "," by "." 
+                match_dict[key] = match_dict[key].replace(",", ".")
             # and append formatted dict
             data.append(match_dict)
             match = next(match_iter, False)
@@ -134,6 +202,8 @@ class BLNET(object):
         and returns list of quadruples of id, name, mode (AUTO/HAND), value 
         (EIN/AUS)
         '''
+        # ensure to be logged in
+        if not self.log_in(): return None
         # create a HTMLParser for later
         h = html.parser.HTMLParser()
         
@@ -176,7 +246,14 @@ class BLNET(object):
         Accepts 'EIN' and everything evaluating to True
         as well as 'AUS' and everything evaluating to False
         and 'AUTO' as values
+        Attributes:
+            id       id of the device whichs state should be changed
+            value    value to change the state to
         '''
+        # throw error for wrong id's
+        if id < 1: raise ValueError('Device id can\'t be smaller than 1')
+        # ensure to be logged in
+        if not self.log_in(): return False
         
         # transform input value to 'EIN' or 'AUS'
         if value == 'AUTO':
@@ -200,6 +277,6 @@ class BLNET(object):
             self.ip + "/580600.htm?blw91A1200" + id + "=" + value ,
             headers = self.cookie_header())
         
-        # return whether we were still logged in
+        # return whether we we're still logged in => setting went well
         return r.headers.get('Set-Cookie') != None
         
