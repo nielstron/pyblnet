@@ -14,15 +14,18 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='PyBLNET',
-      version='0.1.4',
+      version='0.1.5',
       description='Automate web based communication with BL-NET to UVR1611',
       author='Niels Mündler',
       author_email='n.muendler@web.de',
       url='https://github.com/nielstron/pyblnet/',
       py_modules=['pyblnet'],
-      requires= [
+      install_requires= [
           'htmldom',
-          'requests'
+          'requests',
+          're',
+          'html',
+          'sre_compile'
           ],
       long_description=long_description,
       license='MIT',
