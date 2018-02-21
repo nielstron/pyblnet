@@ -24,8 +24,7 @@ setup(name='PyBLNET',
           'htmldom',
           'requests',
           're',
-          'html',
-          'sre_compile'
+          'html'
           ],
       long_description=long_description,
       license='MIT',
