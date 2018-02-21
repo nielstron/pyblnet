@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding=utf-8
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 # To use a consistent encoding
 from codecs import open
@@ -20,7 +20,8 @@ setup(name='PyBLNET',
       author_email='n.muendler@web.de',
       url='https://github.com/nielstron/pyblnet/',
       py_modules=['pyblnet'],
-      install_requires= [
+      packages = find_packages(),
+      install_requires = [
           'htmldom',
           'requests',
           'html'
