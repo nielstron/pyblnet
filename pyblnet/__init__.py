@@ -42,7 +42,10 @@ def test_blnet(ip):
     '''
     if "http://" not in ip and "https://" not in ip:
         ip = "http://" + ip
-    r = requests.get(ip)
+    try:
+        r = requests.get(ip, timeout=5)
+    except requests.exceptions.RequestException:
+        return False
     # Parse  DOM object from HTMLCode
     dom = htmldom.HtmlDom().createDom(r.text)
     # either a 'Zugriff verweigert' message is shown
@@ -91,7 +94,8 @@ class BLNET(object):
             # restricted page is chosen to be small in data
             # so that it can be quickly loaded
             self.ip + "/par.htm?blp=A1200101&1238653",
-            headers = self.cookie_header()
+            headers = self.cookie_header(),
+            timeout = 5
             )
         return r.headers.get('Set-Cookie') != None
     
@@ -117,7 +121,8 @@ class BLNET(object):
             }
         r = requests.post(
             self.ip + '/main.html',
-             data = payload, headers = headers)
+             data = payload, headers = headers,
+             timeout = 5)
         #try two times to log in
         i = 0
         while i < 2:
@@ -134,7 +139,8 @@ class BLNET(object):
         '''
         requests.get(
             self.ip + "/main.html?blL=1",
-             headers = self.cookie_header())
+             headers = self.cookie_header(),
+             timeout = 5)
         return not self.logged_in()
     
     def set_node(self, node):
@@ -148,7 +154,8 @@ class BLNET(object):
         # send the request to change the node
         r = requests.get(
             self.ip + "/can.htm?blaA=" + str(node),
-            headers = self.cookie_header())
+            headers = self.cookie_header(),
+            timeout = 5)
         # return whether we we're still logged in => setting went well
         return r.headers.get('Set-Cookie') != None
     
@@ -165,7 +172,8 @@ class BLNET(object):
         if not self.logged_in(): self.log_in()
         r = requests.get(
             self.ip + "/580500.htm",
-            headers = self.cookie_header())
+            headers = self.cookie_header(),
+            timeout = 5)
         # Parse  DOM object from HTMLCode
         dom = htmldom.HtmlDom().createDom(r.text)
         # get the element containing the interesting information
@@ -210,7 +218,8 @@ class BLNET(object):
         if not self.logged_in(): self.log_in()
         r = requests.get(
             self.ip + "/580600.htm",
-            headers = self.cookie_header())
+            headers = self.cookie_header(),
+            timeout = 5)
         # Parse  DOM object from HTMLCode
         dom = htmldom.HtmlDom().createDom(r.text)
         # get the element containing the interesting information
@@ -275,7 +284,8 @@ class BLNET(object):
         # submit data to website
         r = requests.get(
             self.ip + "/580600.htm?blw91A1200" + id + "=" + value ,
-            headers = self.cookie_header())
+            headers = self.cookie_header(),
+            timeout = 5)
         
         # return whether we we're still logged in => setting went well
         return r.headers.get('Set-Cookie') != None
