@@ -34,7 +34,7 @@ def detect_blnet(subnet = socket.gethostbyname(socket.getfqdn())):
     return None
 """
             
-def test_blnet(ip):
+def test_blnet(ip, timeout=5):
     '''
     Tests whether an BLNET answers under given ip
     Attributes:
@@ -43,7 +43,7 @@ def test_blnet(ip):
     if "http://" not in ip and "https://" not in ip:
         ip = "http://" + ip
     try:
-        r = requests.get(ip, timeout=5)
+        r = requests.get(ip, timeout=timeout)
     except requests.exceptions.RequestException:
         return False
     # Parse  DOM object from HTMLCode
@@ -68,7 +68,7 @@ class BLNET(object):
     password = ""
     current_taid = "" # TAID cookie in the form 'TAID="EEEE"'
 
-    def __init__(self, ip = False, password = _def_password):
+    def __init__(self, ip = False, password = _def_password, timeout=5):
         '''
         Constructor
         '''
@@ -80,6 +80,7 @@ class BLNET(object):
             raise ValueError('No BLNET found under given address')
         self.ip = ip
         self.password = password
+        self._timeout = timeout
         
     
     def logged_in(self):
@@ -90,13 +91,16 @@ class BLNET(object):
         # check if a request to a restricted page returns a cookie if
         # we have sent one (if our cookie is the current one this
         # would be the case)
-        r = requests.get(
-            # restricted page is chosen to be small in data
-            # so that it can be quickly loaded
-            self.ip + "/par.htm?blp=A1200101&1238653",
-            headers = self.cookie_header(),
-            timeout = 5
-            )
+        try:
+            r = requests.get(
+                # restricted page is chosen to be small in data
+                # so that it can be quickly loaded
+                self.ip + "/par.htm?blp=A1200101&1238653",
+                headers = self.cookie_header(),
+                timeout = self._timeout
+                )
+        except requests.exceptions.RequestException:
+            return False
         return r.headers.get('Set-Cookie') != None
     
     def cookie_header(self):
@@ -109,6 +113,8 @@ class BLNET(object):
     def log_in(self):
         '''
         Logs into the BLNET interface, renews the TAID
+        
+        Return: Login successful
         '''
         if self.logged_in(): return True
         payload = {
@@ -119,10 +125,13 @@ class BLNET(object):
         headers = {
             'Content-Type' : 'application/x-www-form-urlencoded'
             }
-        r = requests.post(
+        try:
+            r = requests.post(
             self.ip + '/main.html',
              data = payload, headers = headers,
-             timeout = 5)
+             timeout = self._timeout)
+        except requests.exceptions.RequestException:
+            return False
         #try two times to log in
         i = 0
         while i < 2:
@@ -136,26 +145,36 @@ class BLNET(object):
     def log_out(self):
         '''
         Logs out of the BLNET interface
+        
+        Return: successful log out
         '''
-        requests.get(
-            self.ip + "/main.html?blL=1",
-             headers = self.cookie_header(),
-             timeout = 5)
+        try:
+            requests.get(
+                self.ip + "/main.html?blL=1",
+                 headers = self.cookie_header(),
+                 timeout = self._timeout)
+        except requests.exceptions.RequestException:
+            return False
         return not self.logged_in()
     
     def set_node(self, node):
         '''
         Selects the node at which the UVR of interest lies
         future requests will be sent at this particular UVR
+        
+        Return: Successful node change
         '''
         # ensure to be logged in
-        if not self.log_in(): return None
+        if not self.log_in(): return False
         
         # send the request to change the node
-        r = requests.get(
-            self.ip + "/can.htm?blaA=" + str(node),
-            headers = self.cookie_header(),
-            timeout = 5)
+        try:
+            r = requests.get(
+                self.ip + "/can.htm?blaA=" + str(node),
+                headers = self.cookie_header(),
+                timeout = self._timeout)
+        except requests.exceptions.RequestException:
+            return False
         # return whether we we're still logged in => setting went well
         return r.headers.get('Set-Cookie') != None
     
@@ -170,10 +189,13 @@ class BLNET(object):
         h = html.parser.HTMLParser()
         
         if not self.logged_in(): self.log_in()
-        r = requests.get(
-            self.ip + "/580500.htm",
-            headers = self.cookie_header(),
-            timeout = 5)
+        try:
+            r = requests.get(
+                self.ip + "/580500.htm",
+                headers = self.cookie_header(),
+                timeout = self._timeout)
+        except requests.exceptions.RequestException:
+            return None
         # Parse  DOM object from HTMLCode
         dom = htmldom.HtmlDom().createDom(r.text)
         # get the element containing the interesting information
@@ -216,10 +238,13 @@ class BLNET(object):
         h = html.parser.HTMLParser()
         
         if not self.logged_in(): self.log_in()
-        r = requests.get(
-            self.ip + "/580600.htm",
-            headers = self.cookie_header(),
-            timeout = 5)
+        try:
+            r = requests.get(
+                self.ip + "/580600.htm",
+                headers = self.cookie_header(),
+                timeout = self._timeout)
+        except requests.exceptions.RequestException:
+            return None
         # Parse  DOM object from HTMLCode
         dom = htmldom.HtmlDom().createDom(r.text)
         # get the element containing the interesting information
@@ -258,6 +283,7 @@ class BLNET(object):
         Attributes:
             id       id of the device whichs state should be changed
             value    value to change the state to
+        Return: successful set
         '''
         # throw error for wrong id's
         if id < 1: raise ValueError('Device id can\'t be smaller than 1')
@@ -282,10 +308,13 @@ class BLNET(object):
         if not isstring(id): id = str(id)
         
         # submit data to website
-        r = requests.get(
-            self.ip + "/580600.htm?blw91A1200" + id + "=" + value ,
-            headers = self.cookie_header(),
-            timeout = 5)
+        try:
+            r = requests.get(
+                self.ip + "/580600.htm?blw91A1200" + id + "=" + value ,
+                headers = self.cookie_header(),
+                timeout = self._timeout)
+        except requests.exceptions.RequestException:
+            return False
         
         # return whether we we're still logged in => setting went well
         return r.headers.get('Set-Cookie') != None
