@@ -274,7 +274,7 @@ class BLNET(object):
             match = next(match_iter, False)
         return data
     
-    def set_digital_value(self, id, value):
+    def set_digital_value(self, digital_id, value):
         '''
         Sets a digital value with given id to given value 
         Accepts 'EIN' and everything evaluating to True
@@ -285,8 +285,10 @@ class BLNET(object):
             value    value to change the state to
         Return: successful set
         '''
+        digital_id = int(digital_id)
         # throw error for wrong id's
-        if id < 1: raise ValueError('Device id can\'t be smaller than 1')
+        if digital_id < 1:
+            raise ValueError('Device id can\'t be smaller than 1')
         # ensure to be logged in
         if not self.log_in(): return False
         
@@ -300,17 +302,15 @@ class BLNET(object):
         
         # convert id to hexvalue so that 10 etc become A...
         hex_repr = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'A', 'B', 'C', 'D','E', 'F']
-        if isstring(id): id = int(id, 10)
-        if id > 9:
-            id = hex_repr[id]
+        if digital_id > 9:
+            digital_id = hex_repr[id]
         
-        # transform id to string
-        if not isstring(id): id = str(id)
         
         # submit data to website
         try:
             r = requests.get(
-                self.ip + "/580600.htm?blw91A1200" + id + "=" + value ,
+                "{}/580600.htm?blw91A1200{}={}".format(
+                    self.ip, digital_id, value),
                 headers = self.cookie_header(),
                 timeout = self._timeout)
         except requests.exceptions.RequestException:
