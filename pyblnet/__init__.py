@@ -208,7 +208,7 @@ class BLNET(object):
         
         # search for data by regular expression
         match_iter = re.finditer(
-            "&nbsp;(?P<id>\d+):&nbsp;(?P<name>.+)\n" +
+            "(?P<id>\d+):&nbsp;(?P<name>.+)\n" +
             "(&nbsp;){3,6}(?P<value>\d+,\d+) " +
             "(?P<unit_of_measurement>.+?) &nbsp;&nbsp;PAR?", 
             data_raw)
@@ -258,7 +258,7 @@ class BLNET(object):
         
         # search for data by regular expression
         match_iter = re.finditer(
-            "&nbsp;(?P<id>\d+):&nbsp;(?P<name>.+)\n" +
+            "(?P<id>\d+):&nbsp;(?P<name>.+)\n" +
             "&nbsp;&nbsp;&nbsp;&nbsp;(?P<mode>(AUTO|HAND))/" + 
             "(?P<value>(AUS|EIN))", 
             data_raw)
