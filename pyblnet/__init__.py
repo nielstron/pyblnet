@@ -303,7 +303,7 @@ class BLNET(object):
         # convert id to hexvalue so that 10 etc become A...
         hex_repr = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'A', 'B', 'C', 'D','E', 'F']
         if digital_id > 9:
-            digital_id = hex_repr[id]
+            digital_id = hex_repr[digital_id]
         
         
         # submit data to website
