@@ -7,12 +7,8 @@ Created on 26.09.2017
 import requests
 from htmldom import htmldom
 import html.parser
-import re 
-from sre_compile import isstring
+import re
 from builtins import int
-from test.test_binop import isint
-import socket
-import ipaddress
 
 """
 def detect_blnet(subnet = socket.gethostbyname(socket.getfqdn())):
