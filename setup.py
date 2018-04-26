@@ -14,7 +14,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='PyBLNET',
-      version='0.4.2,
+      version='0.4.2',
       description='Automate web based communication with BL-NET to UVR1611',
       author='Niels Mündler',
       author_email='n.muendler@web.de',
