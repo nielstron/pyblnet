@@ -6,7 +6,7 @@ Created on 26.09.2017
 
 import requests
 from htmldom import htmldom
-import html.parser
+import html
 import re
 from builtins import int
 
@@ -181,8 +181,6 @@ class BLNET(object):
         '''
         # ensure to be logged in
         if not self.log_in(): return None
-        # create a HTMLParser for later
-        h = html.parser.HTMLParser()
         
         if not self.logged_in(): self.log_in()
         try:
@@ -214,7 +212,7 @@ class BLNET(object):
             match_dict = match.groupdict()
             # convert html entities to unicode characters
             for key in match_dict.keys():
-                match_dict[key] = h.unescape(match_dict[key])
+                match_dict[key] = html.unescape(match_dict[key])
                 # also replace decimal "," by "." 
                 match_dict[key] = match_dict[key].replace(",", ".")
             # and append formatted dict
@@ -230,8 +228,6 @@ class BLNET(object):
         '''
         # ensure to be logged in
         if not self.log_in(): return None
-        # create a HTMLParser for later
-        h = html.parser.HTMLParser()
         
         if not self.logged_in(): self.log_in()
         try:
@@ -264,7 +260,7 @@ class BLNET(object):
             match_dict = match.groupdict()
             # convert html entities to unicode characters
             for key in match_dict.keys():
-                match_dict[key] = h.unescape(match_dict[key])
+                match_dict[key] = html.unescape(match_dict[key])
             # and append formatted dict
             data.append(match_dict)
             match = next(match_iter, False)
