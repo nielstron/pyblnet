@@ -9,6 +9,7 @@ https://github.com/berwinter/uvr1611/blob/master/lib/backend/blnet-connection.in
 from builtins import str, int
 from socket import socket, getaddrinfo, SOCK_STREAM, IPPROTO_TCP
 import struct
+from .blnet_parser import BLNETParser
 
 # Constants for the UVR Communication
 CAN_MODE = b"\xDC";
@@ -99,7 +100,7 @@ class BLNETDirect(object):
         @param commmand: string only ascii (needs byte length == string length)
         @param length: int length of response
         @throws ConnectionError error when querying
-        @return Binary: string
+        @return Binary: byte string
         '''
         if len(command) == self._socket.send(command):
             data = b""
@@ -140,16 +141,31 @@ class BLNETDirect(object):
                     self._can_frames = frame_count
                     self._actual_size = 57
                     self._fetch_size = 4 + 61 * frame_count
-                
+                elif self._mode == DL_MODE:
+                    (_, device, start_address, end_address, 
+                     checksum) = struct.unpack('!5sB3s3sB')
+                    self._address_inc = 64
+                    self._can_frames = 1
+                    self._actual_size = 57
+                    self._fetch_size = 65
+                elif self._mode == DL2_MODE:
+                    (_, device, start_address, end_address,
+                     checksum) = struct.unpack('!5s2s3s3sB')
+                    self._address_inc = 128
+                    self._can_frames = 1
+                    self._actual_size = 113
+                    self._fetch_size = 126
+ 
                 self._address_end = ((0x07FFFF // self._address_inc)
                                        * self._address_inc)
+ 
                 # check address validity
-                if (start_address[0] != b"0xFF" or
-                    start_address[1] != b"0xFF" or
-                    start_address[2] != b"0xFF" or
-                    end_address[0] != b"0xFF" or
-                    end_address[1] != b"0xFF" or
-                    end_address[2] != b"0xFF"):
+                if (start_address != b'0xFFFFFF' and
+                    end_address != b'0xFFFFFF'):
+                    start_address = int.from_bytes(start_address,
+                                                   byteorder='big')
+                    end_address = int.from_bytes(end_address,
+                                                 byteorder='big')
                     # fix addresses
                     if end_address > start_address:
                         # calculate count
@@ -158,13 +174,13 @@ class BLNETDirect(object):
                     else:
                         self._count = ((self._address_end + start_address
                                         - end_address) / self._address_inc)
-            
-        return self._can_frames        
+                    self._address = end_address
+        return self._count        
 
     def checksum(self, data):
         '''
         Verify the checksum
-        @param string $data Binary string to check
+        @param byte string $data Binary string to check
         @return boolean
         '''
         binary = struct.unpack('!{}B'.format(len(data)), data)
@@ -177,6 +193,68 @@ class BLNETDirect(object):
         # verify
         return sum % 256 == checksum
     
-        
-        
-        
+    def fetch_data(self):
+        '''
+        Fetch datasets from bootloader memory
+        @throws: ConnectionError Data could not be retreived
+        @return Parser
+        ''' 
+        if self._count > 0:
+            self.connect()
+            
+            # build address for bootloader
+            addresses = [
+                self._address & 0xFF,
+                (self._address & 0x7F00) >> 7,
+                (self._address & 0xFF8000) >> 15
+            ]
+            
+            # build command
+            command = struct.pack('!6B', READ_DATA, addresses[0], addresses[1],
+                                  addresses[2], 1, READ_DATA+1+sum(addresses))
+            
+            data = self.query(command, self._fetch_size)
+            
+            if self.checksum(data):
+                # increment address
+                self._address -= self._address_inc
+                if self._address < 0:
+                    self._address = self._address_end
+                self._count -= 1
+                return self._split_datasets(data)
+            raise ConnectionError('Could not retreive data')
+
+    def _split_datasets(self, data):        
+        '''
+        split binary string in datasets and parse dataset values
+        @param data: byte string
+        @return Parser
+        '''
+        frames = {}
+        if self._mode == CAN_MODE:
+            for frame in range(0, self._can_frames):
+                frames["frame{}".format(frame+1)] = BLNETParser(
+                    data[3+DATASET_SIZE*frame:3+DATASET_SIZE*(frame+1)]
+                )
+        elif self._mode == DL_MODE:
+            frames["frame1"] = BLNETParser(
+                data[:DATASET_SIZE]
+            )
+        elif self._mode == DL2_MODE:
+            frames["frame1"] = BLNETParser(
+                data[:DATASET_SIZE]
+            )
+            frames['frames2'] = BLNETParser(
+                data[3+DATASET_SIZE:3+DATASET_SIZE+DATASET_SIZE]
+            )
+
+        start = 0
+ 
+        if self._mode == CAN_MODE:
+            start = 3
+        if data[start:start+DATASET_SIZE-6] == b'0x00' * (DATASET_SIZE-6):
+            return False
+        else:
+            return {k: v.to_dict() for k, v in frames.items()}
+            
+
