@@ -175,6 +175,7 @@ class BLNETDirect(object):
                         self._count = ((self._address_end + start_address
                                         - end_address) / self._address_inc)
                     self._address = end_address
+        self._count = int(self._count)
         return self._count
 
     def checksum(self, data):
@@ -236,18 +237,18 @@ class BLNETDirect(object):
         frames = {}
         if self._mode == CAN_MODE:
             for frame in range(0, self._can_frames):
-                frames["frame{}".format(frame+1)] = BLNETParser(
+                frames[frame] = BLNETParser(
                     data[3+DATASET_SIZE*frame:3+DATASET_SIZE*(frame+1)]
                 )
         elif self._mode == DL_MODE:
-            frames["frame1"] = BLNETParser(
+            frames[0] = BLNETParser(
                 data[:DATASET_SIZE]
             )
         elif self._mode == DL2_MODE:
-            frames["frame1"] = BLNETParser(
+            frames[0] = BLNETParser(
                 data[:DATASET_SIZE]
             )
-            frames['frames2'] = BLNETParser(
+            frames[1] = BLNETParser(
                 data[3+DATASET_SIZE:3+DATASET_SIZE+DATASET_SIZE]
             )
 
@@ -259,5 +260,41 @@ class BLNETDirect(object):
             return False
         else:
             return {k: v.to_dict() for k, v in frames.items()}
+
+    def end_read(self, success=True):
+        '''
+        End read, reset memory on bootloader
+        '''
+        self.connect()
+        # Send end read command
+        if self.query(END_READ, 1) != END_READ:
+            raise ConnectionError('End read command failed')
+        # reset data if configured
+        if success and self.reset:
+            if self.query(RESET_DATA, 1) != RESET_DATA:
+                raise ConnectionError('Reset memory failed')
+        self.count = None
+        self.address = 0
+        self.disconnect()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
