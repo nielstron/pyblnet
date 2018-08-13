@@ -5,23 +5,24 @@ Created on 12.08.2018
 '''
 
 from pyblnet import BLNETWeb, test_blnet, BLNETDirect
-from time import sleep
 
 if __name__ == '__main__':
 
     ip = '192.168.178.10'
     
+    # Check if there is a blnet at given address
     print(test_blnet(ip))
+    # Fetch the latest data via web interface
     blnet = BLNETWeb(ip, timeout=5)
-    #print(blnet.read_analog_values())
-    #print(blnet.read_digital_values())
+    print(blnet.read_analog_values())
+    print(blnet.read_digital_values())
     
+    # For publishing values
     #print(blnet.set_digital_value("10", 'AUS'))
     #print(blnet.read_digital_values())
     
     blnet = BLNETDirect(ip)
-    #print(blnet.get_latest())
-    #sleep(2)
-    blnet._start_read()
-    blnet._end_read(True)
-    print(blnet.get_data(1))
+    # Fetching the latest data from the backend
+    print(blnet.get_latest())
+    # Still inofficial because unexplicably failing often
+    print(blnet._get_data(1))

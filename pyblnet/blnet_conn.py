@@ -113,7 +113,7 @@ class BLNETDirect(object):
         else:
             raise ConnectionError('Could not retreive count')
     
-    def get_data(self, max_count=math.inf):
+    def _get_data(self, max_count=math.inf):
         data = []
         try:
             count = self._start_read()
