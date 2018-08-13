@@ -4,7 +4,7 @@ Created on 12.08.2018
 @author: Niels
 '''
 
-from pyblnet import BLNETWeb, test_blnet, BLNETDirect
+from pyblnet import BLNETWeb, test_blnet, BLNETDirect, BLNET
 
 if __name__ == '__main__':
 
@@ -12,6 +12,11 @@ if __name__ == '__main__':
     
     # Check if there is a blnet at given address
     print(test_blnet(ip))
+    
+    # Easy to use high level interface
+    blnet = BLNET(ip, timeout=5)
+    print(blnet.fetch()
+
     # Fetch the latest data via web interface
     blnet = BLNETWeb(ip, timeout=5)
     print(blnet.read_analog_values())
@@ -26,3 +31,5 @@ if __name__ == '__main__':
     print(blnet.get_latest())
     # Still inofficial because unexplicably failing often
     print(blnet._get_data(1))
+   
+    
