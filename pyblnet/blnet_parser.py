@@ -7,6 +7,7 @@ https://github.com/berwinter/uvr1611/blob/master/lib/backend/blnet-connection.in
 author: Niels
 '''
 import struct
+from datetime import datetime
 
 # Parser constant
 # 1 bit
@@ -44,8 +45,8 @@ class BLNETParser:
         if len(data) == 61:
             (_, seconds, minutes, hours, days, months, years) = struct.unpack(
           '<55sBBBBBB', data)
-            self.date = "20{:02d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}".format(
-                years, months, days, hours, minutes, seconds)
+            self.date = datetime(
+                2000 + years, months, days, hours, minutes, seconds)
             
         # Only parse preceding data
         data = data[:55]
