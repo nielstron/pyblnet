@@ -1,7 +1,7 @@
 '''
 Created on 09.08.2018
 
-This class relies heavily on the following script by berwinter
+This is basically a python port of of a script by berwinter
 https://github.com/berwinter/uvr1611/blob/master/lib/backend/blnet-connection.inc.php
 
 @author: Niels
@@ -10,6 +10,8 @@ from builtins import str, int
 from socket import socket, getaddrinfo, SOCK_STREAM, IPPROTO_TCP
 import struct
 from .blnet_parser import BLNETParser
+from time import sleep
+from datetime import datetime
 
 # Constants for the UVR Communication
 CAN_MODE = b"\xDC"
@@ -277,10 +279,48 @@ class BLNETDirect(object):
         self.address = 0
         self.disconnect()
 
+    def get_latest(self):
+        self.connect()
+        self.get_count()
+        frames = {}
+        info = {
+            'sleep': {},
+            'got': {}
+        }
 
+        # for all frames
+        for frame in range(1, self._can_frames + 1):
+            # build command
+            command = struct.pack("<2B", GET_LATEST, frame)
+            # try 4 times
+            for n in range(0, MAX_RETRYS):
+                data = self.query(command, self._actual_size)
+                
+                if self.checksum(data):
+                    binary = struct.unpack("<{}".format("B"*len(data)), data)
+                    
+                    if binary[1] == WAIT_TIME:
+                        info['sleep'][frame].append(
+                            int.from_bytes(binary[2], 'little')
+                        )
+                        self.disconnect()
+                        # wait some seconds
+                        sleep(int.from_bytes(binary[2], 'little'))
+                        self.connect()
+                    else:
+                        info['got'][frame] = n
+                        frames[frame] = self.split_latest(data, frame)
+                        break
+            # TODO this looks suspicious
+            if n == MAX_RETRYS-1:
+                frames[frame] = 'timeout'
 
-
-
+        self.disconnect()
+        if len(frames) > 0:
+            frames['time'] = datetime.now()
+            frames['info'] = info
+            return frames
+        raise ConnectionError("Could not get latest data")
 
 
 
