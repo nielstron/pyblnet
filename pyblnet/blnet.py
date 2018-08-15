@@ -28,6 +28,8 @@ class BLNET(object):
         self.address = address
         self.timeout = timeout
         self.max_retries = max_retries
+        self.blnet_web = None
+        self.blnet_direct = None
         if use_web:
             self.blnet_web = BLNETWeb(address, password, timeout)
         if use_ta:
