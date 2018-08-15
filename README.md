@@ -4,12 +4,14 @@ It is able to read digital and analog values as well as to set switches to ON/OF
 
 ```python
 ip = '192.168.178.10'
+
 # Check if there is a blnet at given address
 print(test_blnet(ip))
 
 # Easy to use high level interface
 blnet = BLNET(ip, timeout=5)
-print(blnet.fetch()
+print(blnet.turn_on(10))
+print(blnet.fetch())
 
 # Fetch the latest data via web interface
 blnet = BLNETWeb(ip, timeout=5)

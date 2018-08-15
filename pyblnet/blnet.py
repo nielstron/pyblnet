@@ -71,13 +71,13 @@ class BLNET(object):
         return data
     
     def turn_on(self, digital_id, can_node=None):
-        self._turn(digital_id, 'EIN', can_node)
+        return self._turn(digital_id, 'EIN', can_node)
 
     def turn_off(self, digital_id, can_node=None):
-        self._turn(digital_id, 'AUS', can_node)
+        return self._turn(digital_id, 'AUS', can_node)
 
     def turn_auto(self, digital_id, can_node=None):
-        self._turn(digital_id, 'AUTO', can_node)
+        return self._turn(digital_id, 'AUTO', can_node)
         
     def _turn(self, digital_id, value, can_node=None):
         if self.blnet_web:
@@ -88,6 +88,8 @@ class BLNET(object):
                     raise ConnectionError('Could not set node')
             if not self.blnet_web.set_digital_value(digital_id, value):
                 raise ConnectionError('Failed to set value')
+            else:
+                return True
         else:
             raise EnvironmentError('Can\'t set values with blnet web disabled')
 
