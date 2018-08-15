@@ -230,8 +230,8 @@ class BLNETDirect(object):
 
             # build command
             command = struct.pack(
-                '<6B', READ_DATA, addresses[0], addresses[1], addresses[2], 1, 
-                (READ_DATA + 1 + sum(addresses)) % 256 )
+                '<6B', READ_DATA, addresses[0], addresses[1], addresses[2], 1,
+                (READ_DATA + 1 + sum(addresses)) % 256)
 
             data = self._query(command, self._fetch_size)
 
@@ -254,7 +254,8 @@ class BLNETDirect(object):
         if self._mode == CAN_MODE:
             for frame in range(0, self._can_frames):
                 frames[frame] = BLNETParser(
-                    data[3+DATASET_SIZE*frame:3+DATASET_SIZE*(frame+1)]
+                    data[3 + DATASET_SIZE * frame:
+                         3 + DATASET_SIZE * (frame + 1)]
                 )
         elif self._mode == DL_MODE:
             frames[0] = BLNETParser(
@@ -265,14 +266,14 @@ class BLNETDirect(object):
                 data[:DATASET_SIZE]
             )
             frames[1] = BLNETParser(
-                data[3+DATASET_SIZE:3+DATASET_SIZE+DATASET_SIZE]
+                data[3 + DATASET_SIZE:3 + DATASET_SIZE + DATASET_SIZE]
             )
 
         start = 0
 
         if self._mode == CAN_MODE:
             start = 3
-        if data[start:start+DATASET_SIZE-6] == b'0x00' * (DATASET_SIZE-6):
+        if data[start:start + DATASET_SIZE - 6] == b'0x00' * (DATASET_SIZE - 6):
             return False
         else:
             return {k: v.to_dict() for k, v in frames.items()}
@@ -311,7 +312,7 @@ class BLNETDirect(object):
         # for all frames
         for frame in range(0, self._can_frames):
             # build command
-            command = struct.pack("<2B", GET_LATEST, frame+1)
+            command = struct.pack("<2B", GET_LATEST, frame + 1)
             # try 4 times
             sleeps = []
             for n in range(0, max_retries):
@@ -331,7 +332,7 @@ class BLNETDirect(object):
                         frames.update(self._split_latest(data, frame))
                         break
             # TODO this looks suspicious
-            if n == max_retries-1:
+            if n == max_retries - 1:
                 frames[frame] = 'timeout'
             info['sleep'][frame] = sleeps
         self._end_read(True)
@@ -350,12 +351,12 @@ class BLNETDirect(object):
         '''
         frames = {}
         if self._mode == CAN_MODE:
-            frames[frame] = BLNETParser(data[1:LATEST_SIZE+1])
+            frames[frame] = BLNETParser(data[1:LATEST_SIZE + 1])
         elif self._mode == DL_MODE:
-            frames[0] = BLNETParser(data[1:LATEST_SIZE+1])
+            frames[0] = BLNETParser(data[1:LATEST_SIZE + 1])
         elif self._mode == DL2_MODE:
-            frames[0] = BLNETParser(data[1:LATEST_SIZE+1])
-            frames[1] = BLNETParser(data[LATEST_SIZE+1:2*LATEST_SIZE+1])
+            frames[0] = BLNETParser(data[1:LATEST_SIZE + 1])
+            frames[1] = BLNETParser(data[LATEST_SIZE + 1:2 * LATEST_SIZE + 1])
 
         return {k: v.to_dict() for k, v in frames.items()}
 

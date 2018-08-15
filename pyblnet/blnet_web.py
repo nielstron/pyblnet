@@ -60,16 +60,16 @@ class BLNETWeb(object):
         password   the password to log into the web interface provided
     '''
     ip = ""
-    _def_password = "0128" #default password is 0128
+    _def_password = "0128"  # default password is 0128
     password = ""
-    current_taid = "" # TAID cookie in the form 'TAID="EEEE"'
+    current_taid = ""  # TAID cookie in the form 'TAID="EEEE"'
 
-    def __init__(self, ip = False, password=_def_password, timeout=5):
+    def __init__(self, ip=False, password=_def_password, timeout=5):
         '''
         Constructor
         '''
         # if ip is omitted, search for UVR yourself
-        #if not ip: ip = detect_blnet() - not working yet
+        # if not ip: ip = detect_blnet() - not working yet
         if "http://" not in ip and "https://" not in ip:
             ip = "http://" + ip
         if not test_blnet(ip): 
@@ -94,8 +94,8 @@ class BLNETWeb(object):
                 # restricted page is chosen to be small in data
                 # so that it can be quickly loaded
                 self.ip + "/par.htm?blp=A1200101&1238653",
-                headers = self.cookie_header(),
-                timeout = self._timeout
+                headers=self.cookie_header(),
+                timeout=self._timeout
                 )
         except requests.exceptions.RequestException:
             return False
@@ -116,7 +116,7 @@ class BLNETWeb(object):
         '''
         if self.logged_in(): return True
         payload = {
-            'blu' : 1, # log in as experte
+            'blu' : 1,  # log in as experte
             'blp' : self.password,
             'bll' : "Login"
             }
@@ -126,11 +126,11 @@ class BLNETWeb(object):
         try:
             r = requests.post(
             self.ip + '/main.html',
-             data = payload, headers = headers,
-             timeout = self._timeout)
+             data=payload, headers=headers,
+             timeout=self._timeout)
         except requests.exceptions.RequestException:
             return False
-        #try two times to log in
+        # try two times to log in
         i = 0
         while i < 2:
             self.current_taid = r.headers.get('Set-Cookie')
@@ -149,8 +149,8 @@ class BLNETWeb(object):
         try:
             requests.get(
                 self.ip + "/main.html?blL=1",
-                 headers = self.cookie_header(),
-                 timeout = self._timeout)
+                 headers=self.cookie_header(),
+                 timeout=self._timeout)
         except requests.exceptions.RequestException:
             return False
         return not self.logged_in()
@@ -169,8 +169,8 @@ class BLNETWeb(object):
         try:
             r = requests.get(
                 self.ip + "/can.htm?blaA=" + str(node),
-                headers = self.cookie_header(),
-                timeout = self._timeout)
+                headers=self.cookie_header(),
+                timeout=self._timeout)
         except requests.exceptions.RequestException:
             return False
         # return whether we we're still logged in => setting went well
@@ -188,8 +188,8 @@ class BLNETWeb(object):
         try:
             r = requests.get(
                 self.ip + "/580500.htm",
-                headers = self.cookie_header(),
-                timeout = self._timeout)
+                headers=self.cookie_header(),
+                timeout=self._timeout)
         except requests.exceptions.RequestException:
             return None
         # Parse  DOM object from HTMLCode
@@ -204,9 +204,9 @@ class BLNETWeb(object):
         
         # search for data by regular expression
         match_iter = re.finditer(
-            "(?P<id>\d+):&nbsp;(?P<name>.+)\n" +
-            "(&nbsp;){3,6}(?P<value>\d+,\d+) " +
-            "(?P<unit_of_measurement>.+?) &nbsp;&nbsp;PAR?", 
+            "(?P<id>\d+):&nbsp;(?P<name>.+)\n" + 
+            "(&nbsp;){3,6}(?P<value>\d+,\d+) " + 
+            "(?P<unit_of_measurement>.+?) &nbsp;&nbsp;PAR?",
             data_raw)
         match = next(match_iter, False)
         # parse a dict of the match and save them all in a list
@@ -235,8 +235,8 @@ class BLNETWeb(object):
         try:
             r = requests.get(
                 self.ip + "/580600.htm",
-                headers = self.cookie_header(),
-                timeout = self._timeout)
+                headers=self.cookie_header(),
+                timeout=self._timeout)
         except requests.exceptions.RequestException:
             return None
         # Parse  DOM object from HTMLCode
@@ -252,9 +252,9 @@ class BLNETWeb(object):
         
         # search for data by regular expression
         match_iter = re.finditer(
-            "(?P<id>\d+):&nbsp;(?P<name>.+)\n" +
+            "(?P<id>\d+):&nbsp;(?P<name>.+)\n" + 
             "&nbsp;&nbsp;&nbsp;&nbsp;(?P<mode>(AUTO|HAND))/" + 
-            "(?P<value>(AUS|EIN))", 
+            "(?P<value>(AUS|EIN))",
             data_raw)
         match = next(match_iter, False)
         # parse a dict of the match and save them all in a list
@@ -288,14 +288,14 @@ class BLNETWeb(object):
         
         # transform input value to 'EIN' or 'AUS'
         if value == 'AUTO':
-            value = '3' # 3 means auto
+            value = '3'  # 3 means auto
         elif value != 'AUS' and value:
-            value = '2' # 2 means turn on
+            value = '2'  # 2 means turn on
         else:
-            value = '1' # 1 means turn off
+            value = '1'  # 1 means turn off
         
         # convert id to hexvalue so that 10 etc become A...
-        hex_repr = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'A', 'B', 'C', 'D','E', 'F']
+        hex_repr = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'A', 'B', 'C', 'D', 'E', 'F']
         if digital_id > 9:
             digital_id = hex_repr[digital_id]
         
@@ -305,8 +305,8 @@ class BLNETWeb(object):
             r = requests.get(
                 "{}/580600.htm?blw91A1200{}={}".format(
                     self.ip, digital_id, value),
-                headers = self.cookie_header(),
-                timeout = self._timeout)
+                headers=self.cookie_header(),
+                timeout=self._timeout)
         except requests.exceptions.RequestException:
             return False
         

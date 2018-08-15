@@ -14,10 +14,10 @@ class BLNET(object):
 
 
     def __init__(self, address, web_port=80, password=None, ta_port=40000,
-                 timeout=5, max_retries=5):
+                 timeout=5, max_retries=5, use_web=True, use_ta=True):
         '''
         If a connection (Web or TA/Direct) should not be used,
-        set the corresponding port to None
+        set the corresponding use_* to False
         Params:
         @param ta_port: Port for direct TCP Connection
         '''
@@ -28,9 +28,9 @@ class BLNET(object):
         self.address = address
         self.timeout = timeout
         self.max_retries = max_retries
-        if web_port is not None:
+        if use_web:
             self.blnet_web = BLNETWeb(address, password, timeout)
-        if ta_port is not None:
+        if use_ta:
             self.blnet_direct = BLNETDirect(address, ta_port)
     
     def fetch(self, node=None):
