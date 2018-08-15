@@ -15,9 +15,9 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='PyBLNET',
-    version='0.6.2',
+    version='0.6.3',
     description='Automate web based communication with BL-NET to UVR1611',
-    author='Niels M??ndler',
+    author='Niels Mündler',
     author_email='n.muendler@web.de',
     url='https://github.com/nielstron/pyblnet/',
     py_modules=['pyblnet'],
