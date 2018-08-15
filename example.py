@@ -15,7 +15,7 @@ if __name__ == '__main__':
     
     # Easy to use high level interface
     blnet = BLNET(ip, timeout=5)
-    print(blnet.fetch()
+    print(blnet.fetch())
 
     # Fetch the latest data via web interface
     blnet = BLNETWeb(ip, timeout=5)

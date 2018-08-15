@@ -61,25 +61,25 @@ class BLNETParser:
 
         self.analog = {}
         for channel in range(0, 16):
-            self.analog[channel] = self._convert_analog(analog[channel])
+            self.analog[channel+1] = self._convert_analog(analog[channel])
         
         self.digital = {}
         for channel in range(0, 16):
-            self.digital[channel] = self._convert_digital(digital, channel)
+            self.digital[channel+1] = self._convert_digital(digital, channel)
 
         self.speed = {}
         for channel in range(0, 4):
-            self.speed[channel] = self._convert_speed(speed[channel])
+            self.speed[channel+1] = self._convert_speed(speed[channel])
         
         self.energy = {}
         for channel in range(0, 2):
-            self.energy[channel] = self._convert_energy(
+            self.energy[channel+1] = self._convert_energy(
                 MWh[channel], kWh[channel], active, channel
             )
 
         self.power = {}
         for channel in range(0, 2):
-            self.power[channel] = self._convert_power(power[channel], active,
+            self.power[channel+1] = self._convert_power(power[channel], active,
                                                   channel)
         
 
