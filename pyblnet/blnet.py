@@ -35,7 +35,7 @@ class BLNET(object):
         if use_web:
             self.blnet_web = BLNETWeb(address, password, timeout)
         if use_ta:
-            host = urlparse(address).hostname
+            host = urlparse(address).hostname or address
             self.blnet_direct = BLNETDirect(host, ta_port)
     
     def fetch(self, node=None):
@@ -103,8 +103,11 @@ class BLNET(object):
         Converts data returned by blnet_web to nice data
         '''
         data = {}
-        for sensor in values:
-            data[int(sensor['id'])] = sensor
+        try:
+            for sensor in values:
+                data[int(sensor['id'])] = sensor
+        except TypeError:
+            pass
         return data
         
         
