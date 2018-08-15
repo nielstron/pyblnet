@@ -6,6 +6,8 @@ Created on 13.08.2018
 from pyblnet.blnet_web import BLNETWeb 
 from pyblnet.blnet_conn import BLNETDirect
 
+from urllib.parse import urlparse
+
 class BLNET(object):
     '''
     General high-level BLNET class, using just
@@ -33,7 +35,8 @@ class BLNET(object):
         if use_web:
             self.blnet_web = BLNETWeb(address, password, timeout)
         if use_ta:
-            self.blnet_direct = BLNETDirect(address, ta_port)
+            host = urlparse(address).hostname
+            self.blnet_direct = BLNETDirect(host, ta_port)
     
     def fetch(self, node=None):
         '''
