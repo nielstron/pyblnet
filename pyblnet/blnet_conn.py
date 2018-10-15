@@ -7,6 +7,7 @@ https://github.com/berwinter/uvr1611/blob/master/lib/backend/blnet-connection.in
 @author: Niels
 '''
 from builtins import str, int
+from requests.exceptions import ConnectionError
 from socket import socket, getaddrinfo, SOCK_STREAM, IPPROTO_TCP
 import struct
 from .blnet_parser import BLNETParser
@@ -28,6 +29,7 @@ WAIT_TIME = 0xBA
 MAX_RETRYS = 10
 DATASET_SIZE = 61
 LATEST_SIZE = 56
+
 
 class BLNETDirect(object):
     '''
@@ -68,7 +70,7 @@ class BLNETDirect(object):
                                                 data)[5]
                     (type, version, timestamp, frame_count, _, start_address,
                      end_address, checksum) = struct.unpack(
-                         '<BB3sB{}s3s3sB'.format(frame_count), data)
+                        '<BB3sB{}s3s3sB'.format(frame_count), data)
                     self._address_inc = 64 * frame_count
                     self._can_frames = frame_count
                     self._actual_size = 57
@@ -88,12 +90,14 @@ class BLNETDirect(object):
                     self._actual_size = 113
                     self._fetch_size = 126
 
-                self._address_end = ((0x07FFFF // self._address_inc)
-                                       * self._address_inc)
+                self._address_end = ((0x07FFFF // self._address_inc) *
+                                     self._address_inc)
 
                 # check address validity
-                if (start_address != b'0xFFFFFF' and
-                    end_address != b'0xFFFFFF'):
+                if (
+                    start_address != b'0xFFFFFF' and
+                    end_address != b'0xFFFFFF'
+                ):
                     start_address = int.from_bytes(start_address,
                                                    byteorder='little')
                     end_address = int.from_bytes(end_address,
@@ -101,18 +105,18 @@ class BLNETDirect(object):
                     # fix addresses
                     if end_address > start_address:
                         # calculate count
-                        self._count = ((end_address - start_address)
-                                       / self._address_inc) + 1
+                        self._count = ((end_address - start_address) /
+                                       self._address_inc) + 1
                     else:
-                        self._count = ((self._address_end + start_address
-                                        - end_address) / self._address_inc)
+                        self._count = ((self._address_end + start_address -
+                                       end_address) / self._address_inc)
                     self._address = end_address
         if self._count:
             self._count = int(self._count)
             return self._count
         else:
-            raise ConnectionError('Could not retreive count')
-    
+            raise ConnectionError('Could not retrieve count')
+
     def _get_data(self, max_count=math.inf):
         data = []
         try:
@@ -124,7 +128,7 @@ class BLNETDirect(object):
         finally:
             self._end_read(False)
             return data
-        
+
     def _check_mode(self):
         '''
         Check if Bootloader Mode is supported
@@ -156,7 +160,7 @@ class BLNETDirect(object):
                     self._socket = socket(family, socktype, proto)
                     self._socket.connect(sockaddr)
                     break
-                except:
+                except Exception:
                     self._socket = None
             if self._socket is None:
                 raise ConnectionError('Could not connect to BLNET')
@@ -187,7 +191,8 @@ class BLNETDirect(object):
             return data
 
         self._disconnect()
-        raise ConnectionError('Error while querying command {}'.format(command))
+        raise ConnectionError(
+            'Error while querying command {}'.format(command))
 
     def _start_read(self):
         '''
@@ -195,7 +200,7 @@ class BLNETDirect(object):
         @return number of frames available
         '''
         return self.get_count()
-    
+
     def _checksum(self, data):
         '''
         Verify the checksum
@@ -242,7 +247,7 @@ class BLNETDirect(object):
                     self._address = self._address_end
                 self._count -= 1
                 return self._split_datasets(data)
-            raise ConnectionError('Could not retreive data')
+            raise ConnectionError('Could not retrieve data')
 
     def _split_datasets(self, data):
         '''
@@ -273,7 +278,10 @@ class BLNETDirect(object):
 
         if self._mode == CAN_MODE:
             start = 3
-        if data[start:start + DATASET_SIZE - 6] == b'0x00' * (DATASET_SIZE - 6):
+        if (
+            data[start:start + DATASET_SIZE - 6] ==
+            b'0x00' * (DATASET_SIZE - 6)
+        ):
             return False
         else:
             return {k: v.to_dict() for k, v in frames.items()}
@@ -317,10 +325,10 @@ class BLNETDirect(object):
             sleeps = []
             for n in range(0, max_retries):
                 data = self._query(command, self._actual_size)
-                
+
                 if self._checksum(data):
-                    binary = struct.unpack("<{}".format("B"*len(data)), data)
-                    
+                    binary = struct.unpack("<{}".format("B" * len(data)), data)
+
                     if binary[0] == WAIT_TIME:
                         sleeps.append(binary[1])
                         self._disconnect()
@@ -344,7 +352,7 @@ class BLNETDirect(object):
 
     def _split_latest(self, data, frame):
         '''
-        Split binary string by fetch latest 
+        Split binary string by fetch latest
         @param data: bytestring
         @param frame: int
         @return Array of frame -> value mappings
@@ -359,17 +367,3 @@ class BLNETDirect(object):
             frames[1] = BLNETParser(data[LATEST_SIZE + 1:2 * LATEST_SIZE + 1])
 
         return {k: v.to_dict() for k, v in frames.items()}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
