@@ -3,18 +3,18 @@ Created on 13.08.2018
 
 @author: Niels
 '''
-from pyblnet.blnet_web import BLNETWeb 
+from pyblnet.blnet_web import BLNETWeb
 from pyblnet.blnet_conn import BLNETDirect
 
+from requests.exceptions import ConnectionError
 from urllib.parse import urlparse
+
 
 class BLNET(object):
     '''
     General high-level BLNET class, using just
     what is available and more precise
     '''
-
-
     def __init__(self, address, web_port=80, password=None, ta_port=40000,
                  timeout=5, max_retries=5, use_web=True, use_ta=True):
         '''
@@ -37,7 +37,7 @@ class BLNET(object):
         if use_ta:
             host = urlparse(address).hostname
             self.blnet_direct = BLNETDirect(host, ta_port)
-    
+
     def fetch(self, node=None):
         '''
         Fetch all available data about selected node
@@ -74,7 +74,7 @@ class BLNET(object):
                         'value': value
                     }
         return data
-    
+
     def turn_on(self, digital_id, can_node=None):
         return self._turn(digital_id, 'EIN', can_node)
 
@@ -83,7 +83,7 @@ class BLNET(object):
 
     def turn_auto(self, digital_id, can_node=None):
         return self._turn(digital_id, 'AUTO', can_node)
-        
+
     def _turn(self, digital_id, value, can_node=None):
         if self.blnet_web:
             if not self.blnet_web.log_in():
@@ -106,5 +106,3 @@ class BLNET(object):
         for sensor in values:
             data[int(sensor['id'])] = sensor
         return data
-        
-        
