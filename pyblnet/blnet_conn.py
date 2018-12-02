@@ -1,11 +1,11 @@
-'''
+"""
 Created on 09.08.2018
 
 This is basically a python port of of a script by berwinter
 https://github.com/berwinter/uvr1611/blob/master/lib/backend/blnet-connection.inc.php
 
 @author: Niels
-'''
+"""
 from builtins import str, int
 from socket import socket, getaddrinfo, SOCK_STREAM, IPPROTO_TCP
 import struct
@@ -29,19 +29,20 @@ MAX_RETRYS = 10
 DATASET_SIZE = 61
 LATEST_SIZE = 56
 
+
 class BLNETDirect(object):
-    '''
+    """
     A class for establishing a direct connection to the BLNET (rather than
     scraping the web interface)
-    '''
+    """
 
     def __init__(self, address, port=40000, reset=False):
-        '''
+        """
         Constructor
         @param address: string, Address of the BL-Net device
         @param port: integer, Port of the bl-net device for connection
         @param reset: boolean, delete data on BL-Net after data receive
-        '''
+        """
         assert(isinstance(address, str))
         assert(isinstance(port, int))
         assert(isinstance(reset, bool))
@@ -54,10 +55,10 @@ class BLNETDirect(object):
         self._check_mode()
 
     def get_count(self):
-        '''
+        """
         Get the number of datasets in the bootloader memory
         @return number of datasets in bootloader memory
-        '''
+        """
         if not self._count:
             self._connect()
             data = self._query(GET_HEADER, 21)
@@ -126,10 +127,10 @@ class BLNETDirect(object):
             return data
         
     def _check_mode(self):
-        '''
+        """
         Check if Bootloader Mode is supported
         @throws ConnectionError Mode not supported
-         '''
+         """
         self._connect()
         self._mode = self._query(GET_MODE, 1)
         self._disconnect()
@@ -139,10 +140,10 @@ class BLNETDirect(object):
         raise ConnectionError('BL-Net mode is not supported')
 
     def _connect(self):
-        '''
+        """
         Connect to bootloader via TCP
         @throws ConnectionError Connection failed
-        '''
+        """
         if self._socket is None:
             available = getaddrinfo(
                 self.address,
@@ -162,21 +163,21 @@ class BLNETDirect(object):
                 raise ConnectionError('Could not connect to BLNET')
 
     def _disconnect(self):
-        '''
+        """
         Disconnect from bootloader via TCP
-        '''
+        """
         self._socket.close()
         self._socket = None
 
     def _query(self, command, length):
-        '''
+        """
         Send a command to the bootloader and wait for the response
         if response is less then 32 bytes long return immediately
         @param commmand: string only ascii (needs byte length == string length)
         @param length: int length of response
         @throws ConnectionError error when querying
         @return Binary: byte string
-        '''
+        """
         if len(command) == self._socket.send(command):
             data = b""
             # get response until length or less than 32 bytes
@@ -190,18 +191,18 @@ class BLNETDirect(object):
         raise ConnectionError('Error while querying command {}'.format(command))
 
     def _start_read(self):
-        '''
+        """
         Start to read on the bootloader
         @return number of frames available
-        '''
+        """
         return self.get_count()
     
     def _checksum(self, data):
-        '''
+        """
         Verify the checksum
         @param byte string $data Binary string to check
         @return boolean
-        '''
+        """
         binary = struct.unpack('<{}B'.format(len(data)), data)
         checksum = binary[-1]
 
@@ -213,11 +214,11 @@ class BLNETDirect(object):
         return sum % 256 == checksum
 
     def _fetch_data(self):
-        '''
+        """
         Fetch datasets from bootloader memory
         @throws: ConnectionError Data could not be retreived
         @return Array of frame -> value mappings
-        '''
+        """
         if self._count and self._count > 0:
             self._connect()
 
@@ -245,11 +246,11 @@ class BLNETDirect(object):
             raise ConnectionError('Could not retreive data')
 
     def _split_datasets(self, data):
-        '''
+        """
         split binary string in datasets and parse dataset values
         @param data: byte string
         @return Array of frame -> value mappings
-        '''
+        """
         frames = {}
         if self._mode == CAN_MODE:
             for frame in range(0, self._can_frames):
@@ -279,9 +280,9 @@ class BLNETDirect(object):
             return {k: v.to_dict() for k, v in frames.items()}
 
     def _end_read(self, success=True):
-        '''
+        """
         End read, reset memory on bootloader
-        '''
+        """
         self._connect()
         # Send end read command
         if self._query(END_READ, 1) != END_READ:
@@ -295,12 +296,12 @@ class BLNETDirect(object):
         self._disconnect()
 
     def get_latest(self, max_retries=MAX_RETRYS):
-        '''
+        """
         Fetch latest (current) data from the BLNet
         @throws checksum error
         @throws ConnectionError could not get data from BLNet
         @return Array of frame -> value mappings
-        '''
+        """
         self._connect()
         self.get_count()
         frames = {}
@@ -343,12 +344,12 @@ class BLNETDirect(object):
         raise ConnectionError("Could not get latest data")
 
     def _split_latest(self, data, frame):
-        '''
+        """
         Split binary string by fetch latest 
         @param data: bytestring
         @param frame: int
         @return Array of frame -> value mappings
-        '''
+        """
         frames = {}
         if self._mode == CAN_MODE:
             frames[frame] = BLNETParser(data[1:LATEST_SIZE + 1])

@@ -1,11 +1,11 @@
-'''
+"""
 Created on 09.08.2018
 
 This is basically a python port of of a script by berwinter
 https://github.com/berwinter/uvr1611/blob/master/lib/backend/blnet-connection.inc.php
 
 author: Niels
-'''
+"""
 import struct
 from datetime import datetime
 
@@ -32,14 +32,15 @@ RAS_POSITIVE_MASK = 0x01FF
 INT32_MASK = 0xFFFFFFFF
 INT32_SIGN = 0x80000000
 
+
 class BLNETParser:
     
     def __init__(self, data):
-        '''
+        """
         parse a binary string containing a dataset
         Provides access to the values of a dataset as object properties
         @param data: byte string
-        '''
+        """
         # check if dataset contains time information
         # (fetched from bootloader storage)
         if len(data) == 61:
@@ -89,18 +90,18 @@ class BLNETParser:
         
 
     def to_dict(self):
-        '''
+        """
         Turn parsed data into parser object
         @return dict
-        '''
+        """
         return self.__dict__
     
     def _convert_analog(self, value):
-        '''
+        """
         Convert int to correct float
         @param value: short unsigned int that was returned by blnet
         @return float with correct sensor value
-        '''
+        """
        
         mask = value & TYPE_MASK
         if mask == TYPE_TEMP:
@@ -118,28 +119,28 @@ class BLNETParser:
             return self._calculate_value(value)
 
     def _convert_digital(self, value, position):
-        '''
+        """
         Check if bit at given position is set (=1)
-        '''
+        """
         if value & (0x1 << (position)):
             return DIGITAL_ON
         else:
             return DIGITAL_OFF
 
     def _convert_speed(self, value):
-        '''
+        """
         Check if speed is activated and return its value
-        '''
+        """
         if value & SPEED_ACTIVE:
             return None
         else:
             return value & SPEED_MASK
  
     def _convert_energy(self, mwh, kwh, active, position):
-        '''
+        """
         Check if heat meter is activated on a given position
         @return its energy
-        '''
+        """
         if active & position:
             kwh = self._calculate_value(kwh, 0.1, INT16_POSITIVE_MASK)
             return mwh * 1000 + kwh
@@ -147,10 +148,10 @@ class BLNETParser:
             return None
     
     def _convert_power(self, value, active, position):
-        '''
+        """
         checks if heat meter is activated at given position
         @return its power
-        '''
+        """
         if active & position:
             return self._calculate_value(value, 1 / 2560,
                                          INT32_MASK, INT32_SIGN)

@@ -1,28 +1,28 @@
-'''
+"""
 Created on 13.08.2018
 
 @author: Niels
-'''
+"""
 from pyblnet.blnet_web import BLNETWeb 
 from pyblnet.blnet_conn import BLNETDirect
 
 from urllib.parse import urlparse
 
+
 class BLNET(object):
-    '''
+    """
     General high-level BLNET class, using just
     what is available and more precise
-    '''
-
+    """
 
     def __init__(self, address, web_port=80, password=None, ta_port=40000,
                  timeout=5, max_retries=5, use_web=True, use_ta=True):
-        '''
+        """
         If a connection (Web or TA/Direct) should not be used,
         set the corresponding use_* to False
         Params:
         @param ta_port: Port for direct TCP Connection
-        '''
+        """
         assert(isinstance(address, str))
         assert(web_port is None or isinstance(web_port, int))
         assert(ta_port is None or isinstance(ta_port, int))
@@ -35,13 +35,16 @@ class BLNET(object):
         if use_web:
             self.blnet_web = BLNETWeb(address, password, timeout)
         if use_ta:
+            # The address might not have a resulting hostname
+            # especially not if not prefixed with http://
+            # see https://docs.python.org/3/library/urllib.parse.html#urllib.parse.urlparse
             host = urlparse(address).hostname or address
             self.blnet_direct = BLNETDirect(host, ta_port)
     
     def fetch(self, node=None):
-        '''
+        """
         Fetch all available data about selected node
-        '''
+        """
         data = {
             'analog': {},
             'digital': {},
@@ -98,10 +101,11 @@ class BLNET(object):
         else:
             raise EnvironmentError('Can\'t set values with blnet web disabled')
 
-    def _convert_web(self, values):
-        '''
+    @staticmethod
+    def _convert_web(values):
+        """
         Converts data returned by blnet_web to nice data
-        '''
+        """
         data = {}
         try:
             for sensor in values:
@@ -109,5 +113,3 @@ class BLNET(object):
         except TypeError:
             pass
         return data
-        
-        
