@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Created on 26.09.2017
 
@@ -50,13 +52,14 @@ class BLNETWeb(object):
         """
         Constructor
         """
-        assert(isinstance(ip, str))
-        assert(password is None or isinstance(password, str))
-        assert(timeout is None or isinstance(timeout, int))
+        assert (isinstance(ip, str))
+        assert (password is None or isinstance(password, str))
+        assert (timeout is None or isinstance(timeout, int))
         if not ip.startswith("http://") and not ip.startswith("https://"):
             ip = "http://" + ip
-        if not test_blnet(ip): 
-            raise ValueError('No BLNET found under given address: {}'.format(ip))
+        if not test_blnet(ip):
+            raise ValueError(
+                'No BLNET found under given address: {}'.format(ip))
         self.ip = ip
         if password is None:
             password = self._def_password
@@ -77,19 +80,18 @@ class BLNETWeb(object):
                 # so that it can be quickly loaded
                 self.ip + "/par.htm?blp=A1200101&1238653",
                 headers=self.cookie_header(),
-                timeout=self._timeout
-                )
+                timeout=self._timeout)
         except requests.exceptions.RequestException:
             return False
         return r.headers.get('Set-Cookie') is not None
-    
+
     def cookie_header(self):
         """
         Creates the header to pass the session TAID as cookie
         """
-        headers = {'Cookie': self.current_taid }
+        headers = {'Cookie': self.current_taid}
         return headers
-    
+
     def log_in(self):
         """
         Logs into the BLNET interface, renews the TAID
@@ -98,18 +100,17 @@ class BLNETWeb(object):
         """
         if self.logged_in(): return True
         payload = {
-            'blu' : 1,  # log in as experte
-            'blp' : self.password,
-            'bll' : "Login"
-            }
-        headers = {
-            'Content-Type' : 'application/x-www-form-urlencoded'
-            }
+            'blu': 1,  # log in as experte
+            'blp': self.password,
+            'bll': "Login"
+        }
+        headers = {'Content-Type': 'application/x-www-form-urlencoded'}
         try:
             r = requests.post(
-            self.ip + '/main.html',
-             data=payload, headers=headers,
-             timeout=self._timeout)
+                self.ip + '/main.html',
+                data=payload,
+                headers=headers,
+                timeout=self._timeout)
         except requests.exceptions.RequestException:
             return False
         # try two times to log in
@@ -135,7 +136,7 @@ class BLNETWeb(object):
         except requests.exceptions.RequestException:
             return False
         return not self.logged_in()
-    
+
     def set_node(self, node):
         """
         Selects the node at which the UVR of interest lies
@@ -146,7 +147,7 @@ class BLNETWeb(object):
         # ensure to be logged in
         if not self.log_in():
             return False
-        
+
         # send the request to change the node
         try:
             r = requests.get(
@@ -157,7 +158,7 @@ class BLNETWeb(object):
             return False
         # return whether we we're still logged in => setting went well
         return r.headers.get('Set-Cookie') is not None
-    
+
     def read_analog_values(self):
         """
         Reads all analog values (temperatures, speeds) from the web interface
@@ -165,7 +166,7 @@ class BLNETWeb(object):
         """
         # ensure to be logged in
         if not self.log_in(): return None
-        
+
         if not self.logged_in(): self.log_in()
         try:
             r = requests.get(
@@ -180,16 +181,15 @@ class BLNETWeb(object):
         dom = dom.find("div.c")[1]
         # filter out the text
         data_raw = dom.text()
-        
+
         # collect data in an array
         data = list()
-        
+
         # search for data by regular expression
         match_iter = re.finditer(
-            "(?P<id>\d+):&nbsp;(?P<name>.+)\n" + 
-            "(&nbsp;){3,6}(?P<value>\d+,\d+) " + 
-            "(?P<unit_of_measurement>.+?) &nbsp;&nbsp;PAR?",
-            data_raw)
+            "(?P<id>\d+):&nbsp;(?P<name>.+)\n" +
+            "(&nbsp;){3,6}(?P<value>\d+,\d+) " +
+            "(?P<unit_of_measurement>.+?) &nbsp;&nbsp;PAR?", data_raw)
         match = next(match_iter, False)
         # parse a dict of the match and save them all in a list
         while match:
@@ -197,13 +197,13 @@ class BLNETWeb(object):
             # convert html entities to unicode characters
             for key in match_dict.keys():
                 match_dict[key] = html.unescape(match_dict[key])
-                # also replace decimal "," by "." 
+                # also replace decimal "," by "."
                 match_dict[key] = match_dict[key].replace(",", ".")
             # and append formatted dict
             data.append(match_dict)
             match = next(match_iter, False)
         return data
-    
+
     def read_digital_values(self):
         """
         Reads all digital values (switches) from the web interface
@@ -212,7 +212,7 @@ class BLNETWeb(object):
         """
         # ensure to be logged in
         if not self.log_in(): return None
-        
+
         if not self.logged_in(): self.log_in()
         try:
             r = requests.get(
@@ -225,19 +225,18 @@ class BLNETWeb(object):
         dom = htmldom.HtmlDom().createDom(r.text)
         # get the element containing the interesting information
         dom = dom.find("div.c")[1]
-        
+
         # filter out the text
         data_raw = dom.text()
 
         # collect data in an array
         data = list()
-        
+
         # search for data by regular expression
         match_iter = re.finditer(
-            "(?P<id>\d+):&nbsp;(?P<name>.+)\n" + 
-            "&nbsp;&nbsp;&nbsp;&nbsp;(?P<mode>(AUTO|HAND))/" + 
-            "(?P<value>(AUS|EIN))",
-            data_raw)
+            "(?P<id>\d+):&nbsp;(?P<name>.+)\n" +
+            "&nbsp;&nbsp;&nbsp;&nbsp;(?P<mode>(AUTO|HAND))/" +
+            "(?P<value>(AUS|EIN))", data_raw)
         match = next(match_iter, False)
         # parse a dict of the match and save them all in a list
         while match:
@@ -249,7 +248,7 @@ class BLNETWeb(object):
             data.append(match_dict)
             match = next(match_iter, False)
         return data
-    
+
     def set_digital_value(self, digital_id, value):
         """
         Sets a digital value with given id to given value 
@@ -269,7 +268,7 @@ class BLNETWeb(object):
         # ensure to be logged in
         if not self.log_in():
             return False
-        
+
         # transform input value to 'EIN' or 'AUS'
         if value == 'AUTO':
             value = '3'  # 3 means auto
@@ -277,21 +276,21 @@ class BLNETWeb(object):
             value = '2'  # 2 means turn on
         else:
             value = '1'  # 1 means turn off
-        
+
         # convert id to hexvalue so that 10 etc become A...
-        hex_repr = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'A', 'B', 'C', 'D', 'E', 'F']
+        hex_repr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'A', 'B', 'C', 'D', 'E', 'F']
         if digital_id > 9:
             digital_id = hex_repr[digital_id]
-        
+
         # submit data to website
         try:
             r = requests.get(
-                "{}/580600.htm?blw91A1200{}={}".format(
-                    self.ip, digital_id, value),
+                "{}/580600.htm?blw91A1200{}={}".format(self.ip, digital_id,
+                                                       value),
                 headers=self.cookie_header(),
                 timeout=self._timeout)
         except requests.exceptions.RequestException:
             return False
-        
+
         # return whether we we're still logged in => setting went well
         return r.headers.get('Set-Cookie') is not None

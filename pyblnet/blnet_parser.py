@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Created on 09.08.2018
 
@@ -34,7 +36,6 @@ INT32_SIGN = 0x80000000
 
 
 class BLNETParser:
-    
     def __init__(self, data):
         """
         parse a binary string containing a dataset
@@ -46,48 +47,44 @@ class BLNETParser:
         if len(data) == 61:
             (_, seconds, minutes, hours, days, months, years) = struct.unpack(
                 '<55sBBBBBB', data)
-            self.date = datetime(
-                2000 + years, months, days, hours, minutes, seconds)
-            
+            self.date = datetime(2000 + years, months, days, hours, minutes,
+                                 seconds)
+
         # Only parse preceding data
         data = data[:55]
         power = [0, 0]
         kWh = [0, 0]
         MWh = [0, 0]
-        (_, digital, speed, active, power[0], kWh[0],
-         MWh[0], power[1], kWh[1], MWh[1]) = struct.unpack(
-             '<32sH4sBLHHLHH', data)
-        
-        analog = struct.unpack('<{}{}'.format('H' * 16, 'x' * (len(data) - 32)), data)
+        (_, digital, speed, active, power[0], kWh[0], MWh[0], power[1], kWh[1],
+         MWh[1]) = struct.unpack('<32sH4sBLHHLHH', data)
+
+        analog = struct.unpack(
+            '<{}{}'.format('H' * 16, 'x' * (len(data) - 32)), data)
 
         self.analog = {}
         for channel in range(0, 16):
-            self.analog[channel+1] = round(
-                self._convert_analog(analog[channel]),
-                3)
-        
+            self.analog[channel + 1] = round(
+                self._convert_analog(analog[channel]), 3)
+
         self.digital = {}
         for channel in range(0, 16):
-            self.digital[channel+1] = self._convert_digital(digital, channel)
+            self.digital[channel + 1] = self._convert_digital(digital, channel)
 
         self.speed = {}
         for channel in range(0, 4):
-            self.speed[channel+1] = round(
-                self._convert_speed(speed[channel]),
-                3)
-        
+            self.speed[channel + 1] = round(
+                self._convert_speed(speed[channel]), 3)
+
         self.energy = {}
         for channel in range(0, 2):
-            self.energy[channel+1] = round(self._convert_energy(
-                MWh[channel], kWh[channel], active, channel
-            ), 3)
+            self.energy[channel + 1] = round(
+                self._convert_energy(MWh[channel], kWh[channel], active,
+                                     channel), 3)
 
         self.power = {}
         for channel in range(0, 2):
-            self.power[channel+1] = round(
-                self._convert_power(power[channel], active, channel),
-                3)
-        
+            self.power[channel + 1] = round(
+                self._convert_power(power[channel], active, channel), 3)
 
     def to_dict(self):
         """
@@ -95,14 +92,14 @@ class BLNETParser:
         @return dict
         """
         return self.__dict__
-    
+
     def _convert_analog(self, value):
         """
         Convert int to correct float
         @param value: short unsigned int that was returned by blnet
         @return float with correct sensor value
         """
-       
+
         mask = value & TYPE_MASK
         if mask == TYPE_TEMP:
             return self._calculate_value(value, 0.1)
@@ -135,7 +132,7 @@ class BLNETParser:
             return None
         else:
             return value & SPEED_MASK
- 
+
     def _convert_energy(self, mwh, kwh, active, position):
         """
         Check if heat meter is activated on a given position
@@ -146,34 +143,24 @@ class BLNETParser:
             return mwh * 1000 + kwh
         else:
             return None
-    
+
     def _convert_power(self, value, active, position):
         """
         checks if heat meter is activated at given position
         @return its power
         """
         if active & position:
-            return self._calculate_value(value, 1 / 2560,
-                                         INT32_MASK, INT32_SIGN)
+            return self._calculate_value(value, 1 / 2560, INT32_MASK,
+                                         INT32_SIGN)
         else:
             return None
-    
-    def _calculate_value(self, value, multiplier=1,
-                         positive_mask=POSITIVE_VALUE_MASK, signbit=SIGN_BIT):
+
+    def _calculate_value(self,
+                         value,
+                         multiplier=1,
+                         positive_mask=POSITIVE_VALUE_MASK,
+                         signbit=SIGN_BIT):
         result = value & positive_mask
         if value & signbit:
             result = -((result ^ positive_mask) + 1)
         return result * multiplier
-   
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-        
