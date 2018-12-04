@@ -15,7 +15,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='PyBLNET',
-    version='0.6.7',
+    version='0.7.0',
     description='Automate web based communication with BL-NET to UVR1611',
     author='Niels Mündler',
     author_email='n.muendler@web.de',
@@ -26,7 +26,7 @@ setup(
     long_description=long_description,
     license='MIT',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         # Indicate who your project is intended for
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Object Brokering',
