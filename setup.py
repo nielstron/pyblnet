@@ -24,6 +24,7 @@ setup(
     packages=find_packages(),
     install_requires=['htmldom', 'requests'],
     long_description=long_description,
+    long_description_content_type='text/markdown',
     license='MIT',
     classifiers=[
         'Development Status :: 4 - Beta',
