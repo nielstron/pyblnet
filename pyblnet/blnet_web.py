@@ -248,7 +248,26 @@ class BLNETWeb(object):
             data.append(match_dict)
             match = next(match_iter, False)
         return data
-
+    
+    def get_digital_value(self, type='value', name=None, id=None, cached=None):
+        """
+          higher level interface to get a value or mode by name or id       
+          type: can be 'value', 'mode'
+          cached: in order to prevent polling data from BLNet with every call, 
+                  the data can be fetched once and stored and passed to this function
+          
+        """
+        val=None
+        if name is None and id is None: return val
+        if cached==None:
+          cached=self.read_digital_values()
+        for v in cached:
+           if v['name']==str(name) or name==None: 
+             if v['id']==str(id) or id==None:
+               val=v[type]
+        return val
+    
+    
     def set_digital_value(self, digital_id, value):
         """
         Sets a digital value with given id to given value 
