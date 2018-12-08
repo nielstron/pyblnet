@@ -3,6 +3,11 @@
 """
 Created on 13.08.2018
 
+General high-level BLNET interface.
+
+Abstracts from actual type of connection to the BLNET and provides as much functionality
+as possible.
+
 @author: Niels
 """
 from pyblnet.blnet_web import BLNETWeb
@@ -13,8 +18,19 @@ from urllib.parse import urlparse
 
 class BLNET(object):
     """
-    General high-level BLNET class, using just
-    what is available and more precise
+    General high-level BLNET interface.
+    
+    Abstracts from actual type of connection to the BLNET and provides as much functionality
+    as possible.
+    Attributes:
+    address      ip address of the BLNET
+    web_port     port of the HTTP interface
+    password     password for authenticating on the HTTP interface
+    ta_port      port of the PC-BLNET interface
+    timeout      timeout for requests
+    max_retries  maximum number of connection retries before aborting
+    use_web      boolean about whether to make use of the HTTP interface
+    use_ta       boolean about whether to make use of the (buggy) PC-BLNET interface
     """
 
     def __init__(self,
@@ -53,6 +69,7 @@ class BLNET(object):
     def fetch(self, node=None):
         """
         Fetch all available data about selected node
+        (defaults to active node on the device)
         """
         data = {
             'analog': {},
@@ -84,12 +101,24 @@ class BLNET(object):
         return data
 
     def turn_on(self, digital_id, can_node=None):
+        """
+        Turn switch with given id on given node on
+        Return: successful set
+        """
         return self._turn(digital_id, 'EIN', can_node)
 
     def turn_off(self, digital_id, can_node=None):
+        """
+        Turn switch with given id on given node off
+        Return: successful set
+        """
         return self._turn(digital_id, 'AUS', can_node)
 
     def turn_auto(self, digital_id, can_node=None):
+        """
+        Turn switch with given id on given node to "AUTO"/ give control over to UVR
+        Return: successful set
+        """
         return self._turn(digital_id, 'AUTO', can_node)
 
     def _turn(self, digital_id, value, can_node=None):
