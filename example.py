@@ -23,7 +23,13 @@ if __name__ == '__main__':
     # Fetch the latest data via web interface
     blnet = BLNETWeb(ip, timeout=5)
     print(blnet.read_analog_values())
-    print(blnet.read_digital_values())
+    #print(blnet.read_analog_values())
+    d=blnet.read_digital_values()
+    print(d)
+    
+    print(blnet.get_digital_value(type='mode' , name='Pumpe-Solar1'))
+    print(blnet.get_digital_value(type='value' , cached=d, name='Pumpe-Solar1'))    
+    
 
     # For publishing values
     #print(blnet.set_digital_value("10", 'AUS'))
