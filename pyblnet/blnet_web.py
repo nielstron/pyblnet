@@ -61,6 +61,8 @@ class BLNETWeb(object):
             raise ValueError(
                 'No BLNET found under given address: {}'.format(ip))
         self.ip = ip
+        if password is None:
+            password = self._def_password
         self.password = password
         self._timeout = timeout
 
@@ -97,7 +99,6 @@ class BLNETWeb(object):
         Return: Login successful
         """
         if self.logged_in(): return True
-        if self.password is None: return True
         payload = {
             'blu': 1,  # log in as experte
             'blp': self.password,
