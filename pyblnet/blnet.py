@@ -103,21 +103,21 @@ class BLNET(object):
     def turn_on(self, digital_id, can_node=None):
         """
         Turn switch with given id on given node on
-        Return: successful set
+        Return: no error during set operation
         """
         return self._turn(digital_id, 'EIN', can_node)
 
     def turn_off(self, digital_id, can_node=None):
         """
         Turn switch with given id on given node off
-        Return: successful set
+        Return: no error during set operation
         """
         return self._turn(digital_id, 'AUS', can_node)
 
     def turn_auto(self, digital_id, can_node=None):
         """
         Turn switch with given id on given node to "AUTO"/ give control over to UVR
-        Return: successful set
+        Return: no error during set operation
         """
         return self._turn(digital_id, 'AUTO', can_node)
 
