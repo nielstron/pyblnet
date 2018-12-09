@@ -4,6 +4,13 @@ It is able to read digital and analog values as well as to set switches to ON/OF
 
 Documentation on the modules and their methods can be found with the methods and modules themselves.
 
+Two interfaces to BLNet exist and both are supported:
+- Webinterface  - Class BLnetWeb
+- BLNet-Direct protocol ([1]) - Class BLNETDirect
+
+The class BLNET is a wrapper around the two classes. When initializing the class, the two interfaces can be activated/deactivated. 
+BLNetDirect provides 'analog', 'digital',  'speed', 'energy', 'power', whereas BLnetWeb supports 'analog' and 'digital' only. If both are active, BLNetDirect has priority.
+
 ### Usage
 
 ```python
@@ -43,3 +50,6 @@ print(blnet.get_latest())
 # Still inofficial because unexplicably failing often
 print(blnet._get_data(1))
 ```
+
+
+[1] https://www.haus-terra.at/heizung/download/Schnittstelle/Schnittstelle_PC_Bootloader.pdf
