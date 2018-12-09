@@ -1,6 +1,10 @@
 # PyBLNET - a very basic python BL-NET bridge
 A package that connects to the BL-NET that is connected itself to a UVR1611 device by Technische Alternative. 
-It is able to read digital and analog values as well as to set switches to ON/OFF/AUTO
+It is able to read digital and analog values as well as to set switches to ON/OFF/AUTO.
+
+Documentation on the modules and their methods can be found with the methods and modules themselves.
+
+### Usage
 
 ```python
 ip = '192.168.178.10'
@@ -8,7 +12,7 @@ ip = '192.168.178.10'
 # Check if there is a blnet at given address
 test_blnet(ip) # -> True/False
 
-# Easy to use high level interface
+# Convenient high level interface
 blnet = BLNET(ip, timeout=5)
 
 # Control a switch by its ID
