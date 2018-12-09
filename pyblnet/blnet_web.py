@@ -3,6 +3,9 @@
 """
 Created on 26.09.2017
 
+A module for connecting with, collecting data from and controlling the BLNet 
+via it's HTTP-interface
+
 @author: Nielstron
 """
 
@@ -38,10 +41,12 @@ def test_blnet(ip, timeout=5):
 
 class BLNETWeb(object):
     """
-    Interface to communicate with the UVR1611 over his web surface (BL-Net)
+    Interface for connecting with, collecting data from and controlling the BLNet 
+    via it's HTTP-interface
     Attributes:
-        ip         The ip/domain of the UVR1611/BL-Net to connect to
+        ip         the ip/domain of the BL-Net to connect to
         password   the password to log into the web interface provided
+        timeout    timeout for http requests
     """
     ip = ""
     _def_password = "0128"  # default password is 0128
@@ -141,7 +146,7 @@ class BLNETWeb(object):
         Selects the node at which the UVR of interest lies
         future requests will be sent at this particular UVR
         
-        Return: Successful node change
+        Return: Still logged in (indicating successful node change)
         """
         # ensure to be logged in
         if not self.log_in():
@@ -156,7 +161,7 @@ class BLNETWeb(object):
         except requests.exceptions.RequestException:
             return False
         # return whether we we're still logged in => setting went well
-        return r.headers.get('Set-Cookie') is not None
+        return password is None or r.headers.get('Set-Cookie') is not None
 
     def read_analog_values(self):
         """
@@ -257,7 +262,7 @@ class BLNETWeb(object):
         Attributes:
             id       id of the device whichs state should be changed
             value    value to change the state to
-        Return: successful set
+        Return: still logged in (indicating successful set)
         """
 
         digital_id = int(digital_id)
@@ -292,4 +297,4 @@ class BLNETWeb(object):
             return False
 
         # return whether we we're still logged in => setting went well
-        return r.headers.get('Set-Cookie') is not None
+        return password is None or r.headers.get('Set-Cookie') is not None

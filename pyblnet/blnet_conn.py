@@ -36,6 +36,9 @@ class BLNETDirect(object):
     """
     A class for establishing a direct connection to the BLNET (rather than
     scraping the web interface)
+    
+    It uses this protocol and is still very buggy
+    www.haus-terra.at/heizung/download/Schnittstelle/Schnittstelle_PC_Bootloader.pdf
     """
 
     def __init__(self, address, port=40000, reset=False):
