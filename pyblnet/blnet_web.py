@@ -146,7 +146,7 @@ class BLNETWeb(object):
         Selects the node at which the UVR of interest lies
         future requests will be sent at this particular UVR
         
-        Return: Successful node change
+        Return: Still logged in (indicating successful node change)
         """
         # ensure to be logged in
         if not self.log_in():
@@ -161,7 +161,7 @@ class BLNETWeb(object):
         except requests.exceptions.RequestException:
             return False
         # return whether we we're still logged in => setting went well
-        return r.headers.get('Set-Cookie') is not None
+        return password is None or r.headers.get('Set-Cookie') is not None
 
     def read_analog_values(self):
         """
@@ -262,7 +262,7 @@ class BLNETWeb(object):
         Attributes:
             id       id of the device whichs state should be changed
             value    value to change the state to
-        Return: successful set
+        Return: still logged in (indicating successful set)
         """
 
         digital_id = int(digital_id)
@@ -297,4 +297,4 @@ class BLNETWeb(object):
             return False
 
         # return whether we we're still logged in => setting went well
-        return r.headers.get('Set-Cookie') is not None
+        return password is None or r.headers.get('Set-Cookie') is not None
