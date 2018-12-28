@@ -106,7 +106,7 @@ class BLNET(object):
         else:
             raise EnvironmentError('Can\'t set values with blnet web disabled')
 
-    def get_value(self,type='digital', ret='value', name=None, id=None, cached=None):
+    def get_value(self, name=None, id=None, type='digital', ret='value', cached=None):
         """
           higher level interface to get a value or mode by name or id
           ret: can be 'value', 'mode'
@@ -120,32 +120,32 @@ class BLNET(object):
         val=None
         dic=None
         if name is None and id is None: return val
-        if cached==None:
+        if cached is None:
           cached=self.fetch()
         for key,v in cached[type].items():
-           if v['name']==str(name) or name==None: 
-             if v['id']==str(id) or id==None:
+           if str(v['name'])==str(name) or name is None: 
+             if str(v['id'])==str(id) or id is None:
                val=v[ret]
                dic=v
         return val, dic
     
-    def get_digital_value(self ret='value', name=None, id=None, cached=None):
+    def get_digital_value(self, ret='value', name=None, id=None, cached=None):
         val, dic=self.get_value(type='digital', ret='value', name=name, id=id, cached=cached)
         return val, dic
     
-    def get_analog_value(self ret='value', name=None, id=None, cached=None):
+    def get_analog_value(self, ret='value', name=None, id=None, cached=None):
         val, dic=self.get_value(type='analog', ret='value', name=name, id=id, cached=cached)
         return val, dic
     
-    def get_energy_value(self ret='value', name=None, id=None, cached=None):
+    def get_energy_value(self, ret='value', name=None, id=None, cached=None):
         val, dic=self.get_value(type='energy', ret='value', name=name, id=id, cached=cached)
         return val, dic
 
-    def get_speed_value(self ret='value', name=None, id=None, cached=None):
+    def get_speed_value(self, ret='value', name=None, id=None, cached=None):
         val, dic=self.get_value(type='speed', ret='value', name=name, id=id, cached=cached)
         return val, dic
     
-    def get_power_value(self ret='value', name=None, id=None, cached=None):
+    def get_power_value(self, ret='value', name=None, id=None, cached=None):
         val, dic=self.get_value(type='power', ret='value', name=name, id=id, cached=cached)
         return val, dic
     
