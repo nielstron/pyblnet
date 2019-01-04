@@ -74,6 +74,8 @@ class BLNETWeb(object):
         Determines whether the object is still connected to the BLNET
         / Logged into the web interface
         """
+        if self.password is None:
+            return True
         # check if a request to a restricted page returns a cookie if
         # we have sent one (if our cookie is the current one this
         # would be the case)
@@ -101,8 +103,8 @@ class BLNETWeb(object):
         
         Return: Login successful
         """
-        if self.logged_in(): return True
-        if self.password is None: return True
+        if self.logged_in():
+            return True
         payload = {
             'blu': 1,  # log in as experte
             'blp': self.password,
@@ -132,6 +134,8 @@ class BLNETWeb(object):
         
         Return: successful log out
         """
+        if self.password is None:
+            return True
         try:
             requests.get(
                 self.ip + "/main.html?blL=1",
@@ -169,9 +173,9 @@ class BLNETWeb(object):
         and returns list of quadruples of id, name, value, unit of measurement
         """
         # ensure to be logged in
-        if not self.log_in(): return None
+        if not self.log_in():
+            return None
 
-        if not self.logged_in(): self.log_in()
         try:
             r = requests.get(
                 self.ip + "/580500.htm",
@@ -215,9 +219,9 @@ class BLNETWeb(object):
         (EIN/AUS)
         """
         # ensure to be logged in
-        if not self.log_in(): return None
+        if not self.log_in():
+            return None
 
-        if not self.logged_in(): self.log_in()
         try:
             r = requests.get(
                 self.ip + "/580600.htm",
