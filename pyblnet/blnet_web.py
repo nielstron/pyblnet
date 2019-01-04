@@ -161,7 +161,7 @@ class BLNETWeb(object):
         except requests.exceptions.RequestException:
             return False
         # return whether we we're still logged in => setting went well
-        return password is None or r.headers.get('Set-Cookie') is not None
+        return self.password is None or r.headers.get('Set-Cookie') is not None
 
     def read_analog_values(self):
         """
@@ -297,4 +297,4 @@ class BLNETWeb(object):
             return False
 
         # return whether we we're still logged in => setting went well
-        return password is None or r.headers.get('Set-Cookie') is not None
+        return self.password is None or r.headers.get('Set-Cookie') is not None
