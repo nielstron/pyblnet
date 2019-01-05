@@ -65,6 +65,18 @@ class SetupTest(unittest.TestCase):
             STATE
         )
 
+    def test_blnet_turn(self):
+        """ Test higher level turn methods """
+        blnet = BLNET(ADDRESS, password=PASSWORD, timeout=10, use_ta=False, web_port=self.port)
+        blnet.turn_on(10)
+        self.assertEqual(self.server.get_node('A'), '2')
+        blnet.turn_on(9)
+        self.assertEqual(self.server.get_node('9'), '2')
+        blnet.turn_auto(8)
+        self.assertEqual(self.server.get_node('8'), '3')
+        blnet.turn_off(1)
+        self.assertEqual(self.server.get_node('1'), '1')
+
     def test_blnet_web_analog(self):
         """ Test reading analog values """
         self.assertEqual(
