@@ -99,6 +99,16 @@ class SetupTest(unittest.TestCase):
         self.assertEqual(self.server.get_node('4'), '2')
         blnet.set_digital_value(6, False)
         self.assertEqual(self.server.get_node('6'), '1')
+        try:
+            blnet.set_digital_value(0, 'EIN')
+            self.fail("Didn't catch wrong id 0")
+        except ValueError:
+            pass
+        try:
+            blnet.set_digital_value(16, 'EIN')
+            self.fail("Didn't catch wrong id 16")
+        except ValueError:
+            pass
 
     def tearDown(self):
         self.server_control.stop_server()

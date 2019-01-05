@@ -273,7 +273,9 @@ class BLNETWeb(object):
         digital_id = int(digital_id)
         # throw error for wrong id's
         if digital_id < 1:
-            raise ValueError('Device id can\'t be smaller than 1')
+            raise ValueError('Device id can\'t be smaller than 1, was {}'.format(digital_id))
+        if digital_id > 15:
+            raise ValueError('Device id can\'t be larger than 15, was {}'.format(digital_id))
         # ensure to be logged in
         if not self.log_in():
             return False
