@@ -1,0 +1,63 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+    <title>Bl-Net</title>
+    <style type="text/css">
+         body{background-color:#000000;font-family:"Courier New", Courier, monospace; margin:0px;} #left{background-color:#DDDDDD;position:absolute;left:0px;top:30px;bottom:20px;width:160px;padding:5px;}#head{background-color:#0000FF;color:#FFFF00;font-weight:bold;font-size:large;text-align:center;position:absolute;left:0px;top:0px;height:30px;right:0px;}#footer{background-color:#FFFF00;color:#000000;text-align:center;position:absolute;left:0px;bottom:0px;height:20px;right:0px;}#center{position:absolute;left:170px;top:30px;bottom:20px;right:0px;} .c{margin:15px auto;text-align:left; width:430px;}.ze{background-color:#CCCCCC;width:100%; border-color:#FFFFFF;border-style:solid;border-width:thin;padding:3px;}.cen{text-align:center;width:100%;} .cen1{height:100%;position:absolute;min-height:600px;}.ueber{position:relative;height:100%;width:100%;max-width:800px;margin:auto;text-align:left;} ul#nav {width: 160px;margin: 0;padding: 0px;} ul#nav li {list-style: none;margin: 0px; padding: 0;} ul#nav a, .ll a {display:block;padding: 3px;text-decoration: none;font-weight: bold;color: #0000CC; background-color: #cccccc;border: 1px solid black;border-left-color: white; border-top-color: white;} ul#nav a:hover, .ll a:hover {border-color: white;border-left-color: black; border-top-color: black;color: white; background-color: #999999;}.ull{position:relative;left:-30px;width:140px; font-size:12px;} .b{font-weight:bold;text-decoration:none;}.bo{border-bottom:medium #FFFFFF solid;}.bs{border-bottom:thin #FFFFFF solid;}.pf a{text-decoration:none;color:#007755;}.gsm{width:15px;height:25px;bottom:0px;font-size:0px;position:absolute;}.dfk{color:#0000ff;}.ea td{vertical-align:top;} .r{color:#FF0000;}.g{color:#00FF00;}.bgb{background-color:#0000CC;color:#FFFF00;} .men {} ul#nav li ul {display: none;}ul#nav li:hover ul {display: block;} #if{position:absolute;width:100%;height:100%;border:none;}.rp{text-decoration:none; color:#007755;} .bf{color:#FFFFFF; background-color:#000000; padding: 0 0px}.nul{text-decoration: none; color:#000000;}
+    </style>
+    <script type="text/javascript">
+        var login=false; function sett() {t=window.frames.centerframe.document.title;document.getElementById('head').firstChild.nodeValue=t;document.title=t;} function act(aid){document.getElementById(aid).style.display="block";}function deact(did){document.getElementById(did).style.display="none";}
+    </script>
+</head>
+<body>
+<div class="cen cen1" style="background-color:#FFFFFF;">
+    <div class="ueber">
+        <div id="head">BL-NET</div>
+        <div id="left">
+            <ul id="nav">
+                <li><a href="can.htm" target="centerframe" onClick="act('bus');">CAN-Bus</a>
+                    <ul id="bus" class="ull">
+                        <li><a href="a_ein.htm?blaE=1" target="centerframe" onClick="act('bus');">analoge
+                            Eing&auml;nge</a></li>
+                        <li><a href="d_ein.htm?blaE=1" target="centerframe" onClick="act('bus');">digitale
+                            Eing&auml;nge</a></li>
+                        <br></ul>
+                </li>
+                <li><a href="GRAFIK.htm" target="_self">Schema</a></li>
+                <li><a href="gsm.htm" target="centerframe" onClick="deact('bus');">GSM</a></li>
+                <li><a href="ether.htm" target="centerframe" onClick="deact('bus');">Ethernet</a></li>
+                <li><a href="passw.htm" target="centerframe" onClick="deact('bus');">Passw&ouml;rter</a></li>
+                <li><a href="data.htm" target="centerframe" onClick="deact('bus');">Datenverwaltung</a></li>
+                <li><a href="datalog.htm" target="centerframe" onClick="deact('bus');">Datenlogging</a></li>
+            </ul>
+            <br>
+            <div class="cen ll"><a href="#" id='ind'
+                                   onclick="if(login){deact('login');login=false;}else { act('login'); login=true;}"
+                                   class="b">Login</a> <a id='outd' style='display:none;' href="main.html?blL=1"
+                                                          class="b">Logout</a>
+                <div><br>
+                    <div id='logu'><b></div>
+                    </b></div>
+            </div>
+            <br>
+            <div style="display:none;" id="login">
+                <form method="post" action="main.html">
+                    <div><input name="blu" type="radio" value="1"/>Experte<br/><input name="u" type="radio" value="2"/>Anwender<br/>
+                        <input name="blu" type="radio" value="5"/>nur ansehen<br/></div>
+                    Passwort:<br/><input name="blp" type="password" size="10" maxlength="8"/><br/> <input name="bll"
+                                                                                                          type="submit"
+                                                                                                          value="Login"/>
+                </form>
+            </div>
+        </div>
+        <div id="center">
+            <iframe id="if" name="centerframe" src="begr.htm" onload="sett();"></iframe>
+        </div>
+        <div id="footer">Bootloader-NET V2.19&nbsp;&nbsp; DE &copy; 2011 <a href="http://www.ta.co.at/" target="_blank">TA</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

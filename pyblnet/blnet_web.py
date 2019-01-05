@@ -14,9 +14,10 @@ from htmldom import htmldom
 import html
 import re
 from builtins import int
+import pickle
 
 
-def test_blnet(ip, timeout=5):
+def test_blnet(ip, timeout=5, id=0):
     """
     Tests whether an BLNET answers under given ip
     Attributes:
@@ -74,6 +75,8 @@ class BLNETWeb(object):
         Determines whether the object is still connected to the BLNET
         / Logged into the web interface
         """
+        if self.password is None:
+            return True
         # check if a request to a restricted page returns a cookie if
         # we have sent one (if our cookie is the current one this
         # would be the case)
@@ -101,8 +104,8 @@ class BLNETWeb(object):
         
         Return: Login successful
         """
-        if self.logged_in(): return True
-        if self.password is None: return True
+        if self.logged_in():
+            return True
         payload = {
             'blu': 1,  # log in as experte
             'blp': self.password,
@@ -117,10 +120,10 @@ class BLNETWeb(object):
                 timeout=self._timeout)
         except requests.exceptions.RequestException:
             return False
+        self.current_taid = r.headers.get('Set-Cookie')
         # try two times to log in
         i = 0
         while i < 2:
-            self.current_taid = r.headers.get('Set-Cookie')
             i += 1
             if self.logged_in():
                 return True
@@ -132,6 +135,8 @@ class BLNETWeb(object):
         
         Return: successful log out
         """
+        if self.password is None:
+            return True
         try:
             requests.get(
                 self.ip + "/main.html?blL=1",
@@ -161,7 +166,7 @@ class BLNETWeb(object):
         except requests.exceptions.RequestException:
             return False
         # return whether we we're still logged in => setting went well
-        return password is None or r.headers.get('Set-Cookie') is not None
+        return self.password is None or r.headers.get('Set-Cookie') is not None
 
     def read_analog_values(self):
         """
@@ -169,9 +174,9 @@ class BLNETWeb(object):
         and returns list of quadruples of id, name, value, unit of measurement
         """
         # ensure to be logged in
-        if not self.log_in(): return None
+        if not self.log_in():
+            return None
 
-        if not self.logged_in(): self.log_in()
         try:
             r = requests.get(
                 self.ip + "/580500.htm",
@@ -215,9 +220,9 @@ class BLNETWeb(object):
         (EIN/AUS)
         """
         # ensure to be logged in
-        if not self.log_in(): return None
+        if not self.log_in():
+            return None
 
-        if not self.logged_in(): self.log_in()
         try:
             r = requests.get(
                 self.ip + "/580600.htm",
@@ -268,18 +273,37 @@ class BLNETWeb(object):
         digital_id = int(digital_id)
         # throw error for wrong id's
         if digital_id < 1:
-            raise ValueError('Device id can\'t be smaller than 1')
+            raise ValueError('Device id can\'t be smaller than 1, was {}'.format(digital_id))
+        if digital_id > 15:
+            raise ValueError('Device id can\'t be larger than 15, was {}'.format(digital_id))
         # ensure to be logged in
         if not self.log_in():
             return False
 
         # transform input value to 'EIN' or 'AUS'
-        if value == 'AUTO':
-            value = '3'  # 3 means auto
-        elif value != 'AUS' and value:
-            value = '2'  # 2 means turn on
+        if isinstance(value, str):
+            if value.lower() == 'AUTO'.lower() or value == '3':
+                value = '3'  # 3 means auto
+            elif value.lower() == 'EIN'.lower() or value == '2' or value.lower() == 'on'.lower():
+                value = '2'  # 2 means turn on
+            elif value.lower() == 'AUS'.lower() or value == '1' or value.lower() == 'off'.lower():
+                value = '1'  # 1 means turn off
+            else:
+                raise ValueError("Illegal input string {}".format(value))
+        elif isinstance(value, int) and not isinstance(value, bool):
+            if value is 3 or value is 2 or value is 1:
+                value = str(value)
+            elif value is 0:
+                value = '1'
+            else:
+                raise ValueError("Illegal input integer {}".format(value))
         else:
-            value = '1'  # 1 means turn off
+            # value can be interpreted as a true value
+            if value:
+                value = '2'  # 2 means turn on
+            else:
+                value = '1'  # 1 means turn off
+        assert(value in ['1', '2', '3'])
 
         # convert id to hexvalue so that 10 etc become A...
         hex_repr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'A', 'B', 'C', 'D', 'E', 'F']
@@ -297,4 +321,4 @@ class BLNETWeb(object):
             return False
 
         # return whether we we're still logged in => setting went well
-        return password is None or r.headers.get('Set-Cookie') is not None
+        return self.password is None or r.headers.get('Set-Cookie') is not None
