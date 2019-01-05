@@ -77,6 +77,8 @@ class SetupTest(unittest.TestCase):
         self.assertEqual(blnet.get_analog_value(name='TSP.oben', cached=fetched), scratch_tuple('analog', 2, 'value'))
         self.assertEqual(blnet.get_digital_value(id=1, cached=fetched), scratch_tuple('digital', 1, 'value'))
         self.assertEqual(blnet.get_digital_mode(id=1, cached=fetched), scratch_tuple('digital', 1, 'mode'))
+        # test auto-fetching
+        self.assertEqual(blnet.get_digital_mode(id=1), scratch_tuple('digital', 1, 'mode'))
 
     def test_blnet_web_analog(self):
         """ Test reading analog values """
