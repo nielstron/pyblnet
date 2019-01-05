@@ -15,7 +15,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='PyBLNET',
-    version='0.7.3',
+    version='0.7.4',
     description='Automate wireless communication to UVR1611 via BL-NET',
     author='Niels Mündler',
     author_email='n.muendler@web.de',
