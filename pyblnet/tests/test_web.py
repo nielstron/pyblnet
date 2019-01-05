@@ -3,14 +3,13 @@
 
 # general requirements
 import unittest
-from .server_control import Server
-from .blnet_mock_server import BLNETServer, BLNETRequestHandler
+from .test_structure.server_control import Server
+from .test_structure.blnet_mock_server import BLNETServer, BLNETRequestHandler
 
 # For the server in this case
 import time
 
 # For the tests
-import requests
 from pyblnet import BLNET, test_blnet, BLNETWeb
 from .web_raw.web_state import STATE, STATE_ANALOG, STATE_DIGITAL
 

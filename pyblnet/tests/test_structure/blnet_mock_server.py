@@ -211,7 +211,7 @@ class BLNETRequestHandler(SimpleHTTPRequestHandler):
             # HTML encode to prevent Cross Site Scripting attacks
             # (see bug #1100201)
             # Specialized error method for BLNET
-            with SERVER_DIR.joinpath("web_raw", "error.html").open('rb') as file:
+            with SERVER_DIR.joinpath(".error.html").open('rb') as file:
                 body = file.read()
             self.send_header("Content-Type", self.error_content_type)
             self.send_header('Content-Length', int(len(body)))
