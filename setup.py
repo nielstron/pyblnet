@@ -15,13 +15,14 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='PyBLNET',
-    version='0.7.2',
+    version='0.7.3',
     description='Automate wireless communication to UVR1611 via BL-NET',
     author='Niels Mündler',
     author_email='n.muendler@web.de',
     url='https://github.com/nielstron/pyblnet/',
     py_modules=['pyblnet'],
     packages=find_packages(),
+    package_data={'': ['*.html', '*.htm']},
     install_requires=['htmldom', 'requests'],
     long_description=long_description,
     long_description_content_type='text/markdown',
