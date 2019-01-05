@@ -18,7 +18,23 @@ ADDRESS = 'localhost'
 PASSWORD = '0123'
 
 
-class SetupTest(unittest.TestCase):
+class OfflineTest(unittest.TestCase):
+
+    url = ADDRESS
+
+    def test_blnet(self):
+        """ Test finding the blnet """
+        self.assertFalse(test_blnet(self.url, timeout=10))
+
+    def test_blnet_web(self):
+        try:
+            blnet = BLNETWeb(self.url)
+            self.fail("Didn't throw an exception for offline blnetweb")
+        except ValueError:
+            pass
+
+
+class BLNETWebTest(unittest.TestCase):
 
     server = None
     server_control = None
@@ -57,6 +73,8 @@ class SetupTest(unittest.TestCase):
     def test_blnet_login(self):
         """ Test logging in """
         self.assertTrue(BLNETWeb(self.url, password=PASSWORD, timeout=10).log_in())
+        # test without http
+        self.assertTrue(BLNETWeb("{}:{}".format(ADDRESS, self.port), password=PASSWORD, timeout=10).log_in())
 
     def test_blnet_fetch(self):
         """ Test fetching data in higher level class """
