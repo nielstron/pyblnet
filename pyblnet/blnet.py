@@ -146,35 +146,39 @@ class BLNET(object):
 
 
         """
-        val=None
-        dic=None
+        val = None
+        dic = None
         if name is None and id is None: return val
         if cached is None:
-          cached=self.fetch()
-        for key,v in cached[type].items():
-           if str(v['name'])==str(name) or name is None: 
-             if str(v['id'])==str(id) or id is None:
-               val=v[ret]
-               dic=v
+            cached = self.fetch()
+        for key, v in cached[type].items():
+            if str(v['name']) == str(name) or str(v['id']) == str(id):
+                val = v[ret]
+                dic = v
+
         return val, dic
     
-    def get_digital_value(self, ret='value', name=None, id=None, cached=None):
-        val, dic=self.get_value(type='digital', ret='value', name=name, id=id, cached=cached)
-        return val, dic
-    
-    def get_analog_value(self, ret='value', name=None, id=None, cached=None):
-        val, dic=self.get_value(type='analog', ret='value', name=name, id=id, cached=cached)
-        return val, dic
-    
-    def get_energy_value(self, ret='value', name=None, id=None, cached=None):
-        val, dic=self.get_value(type='energy', ret='value', name=name, id=id, cached=cached)
+    def get_digital_value(self, name=None, id=None, cached=None):
+        val, dic = self.get_value(type='digital', ret='value', name=name, id=id, cached=cached)
         return val, dic
 
-    def get_speed_value(self, ret='value', name=None, id=None, cached=None):
-        val, dic=self.get_value(type='speed', ret='value', name=name, id=id, cached=cached)
+    def get_digital_mode(self, name=None, id=None, cached=None):
+        val, dic = self.get_value(type='digital', ret='mode', name=name, id=id, cached=cached)
+        return val, dic
+
+    def get_analog_value(self, name=None, id=None, cached=None):
+        val, dic = self.get_value(type='analog', ret='value', name=name, id=id, cached=cached)
         return val, dic
     
-    def get_power_value(self, ret='value', name=None, id=None, cached=None):
+    def get_energy_value(self, name=None, id=None, cached=None):
+        val, dic = self.get_value(type='energy', ret='value', name=name, id=id, cached=cached)
+        return val, dic
+
+    def get_speed_value(self, name=None, id=None, cached=None):
+        val, dic = self.get_value(type='speed', ret='value', name=name, id=id, cached=cached)
+        return val, dic
+    
+    def get_power_value(self, name=None, id=None, cached=None):
         val, dic=self.get_value(type='power', ret='value', name=name, id=id, cached=cached)
         return val, dic
     

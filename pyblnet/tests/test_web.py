@@ -65,6 +65,19 @@ class SetupTest(unittest.TestCase):
             STATE
         )
 
+    def test_blnet_fetch_fine_grained(self):
+        """ Test fetching data in higher level class """
+        fetched = STATE
+
+        def scratch_tuple(type, id, ret):
+            return fetched[type][id][ret], fetched[type][id]
+
+        blnet = BLNET(ADDRESS, password=PASSWORD, timeout=10, use_ta=False, web_port=self.port)
+        self.assertEqual(blnet.get_analog_value(id=5, cached=fetched), scratch_tuple('analog', 5, 'value'))
+        self.assertEqual(blnet.get_analog_value(name='TSP.oben', cached=fetched), scratch_tuple('analog', 2, 'value'))
+        self.assertEqual(blnet.get_digital_value(id=1, cached=fetched), scratch_tuple('digital', 1, 'value'))
+        self.assertEqual(blnet.get_digital_mode(id=1, cached=fetched), scratch_tuple('digital', 1, 'mode'))
+
     def test_blnet_web_analog(self):
         """ Test reading analog values """
         self.assertEqual(
