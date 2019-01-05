@@ -36,6 +36,9 @@ class BLNETDirect(object):
     """
     A class for establishing a direct connection to the BLNET (rather than
     scraping the web interface)
+    
+    It uses this protocol and is still very buggy
+    www.haus-terra.at/heizung/download/Schnittstelle/Schnittstelle_PC_Bootloader.pdf
     """
 
     def __init__(self, address, port=40000, reset=False):
@@ -117,11 +120,13 @@ class BLNETDirect(object):
         else:
             raise ConnectionError('Could not retreive count')
 
-    def _get_data(self, max_count=math.inf):
+    def _get_data(self, max_count=None):
         data = []
         try:
             count = self._start_read()
-            for _ in range(0, min(count, max_count)):
+            if isinstance(max_count, int):
+                count = min(max_count, count)
+            for _ in range(0, count):
                 data.append(self._fetch_data())
             self._end_read(True)
             return data

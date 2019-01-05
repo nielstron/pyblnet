@@ -15,13 +15,14 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='PyBLNET',
-    version='0.7.1',
-    description='Automate web based communication with BL-NET to UVR1611',
+    version='0.7.3',
+    description='Automate wireless communication to UVR1611 via BL-NET',
     author='Niels Mündler',
     author_email='n.muendler@web.de',
     url='https://github.com/nielstron/pyblnet/',
     py_modules=['pyblnet'],
     packages=find_packages(),
+    package_data={'': ['*.html', '*.htm']},
     install_requires=['htmldom', 'requests'],
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -37,8 +38,12 @@ setup(
 
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
-        'Programming Language :: Python :: 3.6'
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
-    keywords='python uvr1611 blnet technische alternative',
+    keywords='python uvr1611 blnet technische alternative home automation iot',
     python_requires='>=3',
+    test_suite='pyblnet.tests',
 )
