@@ -14,9 +14,10 @@ from htmldom import htmldom
 import html
 import re
 from builtins import int
+import pickle
 
 
-def test_blnet(ip, timeout=5):
+def test_blnet(ip, timeout=5, id=0):
     """
     Tests whether an BLNET answers under given ip
     Attributes:
@@ -119,10 +120,10 @@ class BLNETWeb(object):
                 timeout=self._timeout)
         except requests.exceptions.RequestException:
             return False
+        self.current_taid = r.headers.get('Set-Cookie')
         # try two times to log in
         i = 0
         while i < 2:
-            self.current_taid = r.headers.get('Set-Cookie')
             i += 1
             if self.logged_in():
                 return True

@@ -58,7 +58,7 @@ class BLNET(object):
         self.blnet_web = None
         self.blnet_direct = None
         if use_web:
-            self.blnet_web = BLNETWeb(address, password, timeout)
+            self.blnet_web = BLNETWeb("{}:{}".format(address, web_port), password, timeout)
         if use_ta:
             # The address might not have a resulting hostname
             # especially not if not prefixed with http://
