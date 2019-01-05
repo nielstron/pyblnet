@@ -1,7 +1,7 @@
 import os
 import urllib.parse
 from http.server import HTTPStatus, SimpleHTTPRequestHandler, HTTPServer
-import html
+import re
 import posixpath
 from pathlib import Path
 
@@ -15,6 +15,8 @@ class BLNETServer(HTTPServer):
     logged_in = True
     # no login necessary
     password = None
+    # access to digital nodes
+    nodes = {}
 
     def set_password(self, password):
         self.password = password
@@ -22,6 +24,12 @@ class BLNETServer(HTTPServer):
 
     def set_logged_in(self, cookie):
         self.logged_in = cookie
+
+    def set_node(self, id, value):
+        self.nodes[id] = value
+
+    def get_node(self, id):
+        return self.nodes.get(id)
 
 
 class BLNETRequestHandler(SimpleHTTPRequestHandler):
@@ -37,9 +45,17 @@ class BLNETRequestHandler(SimpleHTTPRequestHandler):
             not Path(path) == SERVER_DIR
             and not Path(path) == SERVER_DIR.joinpath('main.htm')
             and not Path(path) == SERVER_DIR.joinpath('main.html')
-            and not self.server.logged_in
         ):
-            self.send_error(403, "Not logged in, access denied")
+            if not self.server.logged_in:
+                self.send_error(403, "Not logged in, access denied")
+                return
+            # Parse node sets
+            node_reg = re.compile(r'[?&]blw91A1200(?P<node>[0-9a-fA-F])=(?P<value>[1-3])')
+            for match in node_reg.finditer(self.path):
+                self.server.set_node(
+                    match.group('node'),
+                    match.group('value')
+                )
 
         # print(path)
         super().do_GET()

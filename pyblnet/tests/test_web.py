@@ -52,28 +52,53 @@ class SetupTest(unittest.TestCase):
         self.server_control.start_server()
 
     def test_blnet(self):
+        """ Test finding the blnet """
         self.assertTrue(test_blnet(self.url, timeout=10))
 
     def test_blnet_login(self):
+        """ Test logging in """
         self.assertTrue(BLNETWeb(self.url, password=PASSWORD, timeout=10).log_in())
 
     def test_blnet_fetch(self):
+        """ Test fetching data in higher level class """
         self.assertEqual(
             BLNET(ADDRESS, password=PASSWORD, timeout=10, use_ta=False, web_port=self.port).fetch(),
             STATE
         )
 
     def test_blnet_web_analog(self):
+        """ Test reading analog values """
         self.assertEqual(
             BLNETWeb(self.url, password=PASSWORD, timeout=10).read_analog_values(),
             STATE_ANALOG
         )
 
     def test_blnet_web_digital(self):
+        """ Test reading digital values"""
         self.assertEqual(
             BLNETWeb(self.url, password=PASSWORD, timeout=10).read_digital_values(),
             STATE_DIGITAL
         )
+
+    def test_blnet_web_set_digital(self):
+        """ Test setting digital values """
+        blnet = BLNETWeb(self.url, password=PASSWORD, timeout=10)
+        blnet.set_digital_value(10, '2')
+        self.assertEqual(self.server.get_node('A'), '2')
+        blnet.set_digital_value(9, 'EIN')
+        self.assertEqual(self.server.get_node('9'), '2')
+        blnet.set_digital_value(8, 'auto')
+        self.assertEqual(self.server.get_node('8'), '3')
+        blnet.set_digital_value(1, 'on')
+        self.assertEqual(self.server.get_node('1'), '2')
+        blnet.set_digital_value(1, 'AUS')
+        self.assertEqual(self.server.get_node('1'), '1')
+        blnet.set_digital_value(5, 3)
+        self.assertEqual(self.server.get_node('5'), '3')
+        blnet.set_digital_value(4, True)
+        self.assertEqual(self.server.get_node('4'), '2')
+        blnet.set_digital_value(6, False)
+        self.assertEqual(self.server.get_node('6'), '1')
 
     def tearDown(self):
         self.server_control.stop_server()

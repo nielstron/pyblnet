@@ -279,12 +279,29 @@ class BLNETWeb(object):
             return False
 
         # transform input value to 'EIN' or 'AUS'
-        if value == 'AUTO':
-            value = '3'  # 3 means auto
-        elif value != 'AUS' and value:
-            value = '2'  # 2 means turn on
+        if isinstance(value, str):
+            if value.lower() == 'AUTO'.lower() or value == '3':
+                value = '3'  # 3 means auto
+            elif value.lower() == 'EIN'.lower() or value == '2' or value.lower() == 'on'.lower():
+                value = '2'  # 2 means turn on
+            elif value.lower() == 'AUS'.lower() or value == '1' or value.lower() == 'off'.lower():
+                value = '1'  # 1 means turn off
+            else:
+                raise ValueError("Illegal input string {}".format(value))
+        elif isinstance(value, int) and not isinstance(value, bool):
+            if value is 3 or value is 2 or value is 1:
+                value = str(value)
+            elif value is 0:
+                value = '1'
+            else:
+                raise ValueError("Illegal input integer {}".format(value))
         else:
-            value = '1'  # 1 means turn off
+            # value can be interpreted as a true value
+            if value:
+                value = '2'  # 2 means turn on
+            else:
+                value = '1'  # 1 means turn off
+        assert(value in ['1', '2', '3'])
 
         # convert id to hexvalue so that 10 etc become A...
         hex_repr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'A', 'B', 'C', 'D', 'E', 'F']
