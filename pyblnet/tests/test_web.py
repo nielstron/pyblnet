@@ -89,7 +89,7 @@ class BLNETWebTest(unittest.TestCase):
         fetched = STATE
 
         def scratch_tuple(type, id, ret):
-            return fetched[type][id][ret], fetched[type][id]
+            return fetched[type][id][ret], fetched[type][id], fetched
 
         blnet = BLNET(ADDRESS, password=PASSWORD, timeout=10, use_ta=False, web_port=self.port)
         self.assertEqual(blnet.get_analog_value(id=5, cached=fetched), scratch_tuple('analog', 5, 'value'))
