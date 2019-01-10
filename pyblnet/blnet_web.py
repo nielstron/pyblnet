@@ -273,9 +273,13 @@ class BLNETWeb(object):
         digital_id = int(digital_id)
         # throw error for wrong id's
         if digital_id < 1:
-            raise ValueError('Device id can\'t be smaller than 1, was {}'.format(digital_id))
+            raise ValueError(
+                'Device id can\'t be smaller than 1, was {}'.format(
+                    digital_id))
         if digital_id > 15:
-            raise ValueError('Device id can\'t be larger than 15, was {}'.format(digital_id))
+            raise ValueError(
+                'Device id can\'t be larger than 15, was {}'.format(
+                    digital_id))
         # ensure to be logged in
         if not self.log_in():
             return False
@@ -284,9 +288,11 @@ class BLNETWeb(object):
         if isinstance(value, str):
             if value.lower() == 'AUTO'.lower() or value == '3':
                 value = '3'  # 3 means auto
-            elif value.lower() == 'EIN'.lower() or value == '2' or value.lower() == 'on'.lower():
+            elif value.lower() == 'EIN'.lower() or value == '2' or value.lower(
+            ) == 'on'.lower():
                 value = '2'  # 2 means turn on
-            elif value.lower() == 'AUS'.lower() or value == '1' or value.lower() == 'off'.lower():
+            elif value.lower() == 'AUS'.lower() or value == '1' or value.lower(
+            ) == 'off'.lower():
                 value = '1'  # 1 means turn off
             else:
                 raise ValueError("Illegal input string {}".format(value))
@@ -303,7 +309,7 @@ class BLNETWeb(object):
                 value = '2'  # 2 means turn on
             else:
                 value = '1'  # 1 means turn off
-        assert(value in ['1', '2', '3'])
+        assert (value in ['1', '2', '3'])
 
         # convert id to hexvalue so that 10 etc become A...
         hex_repr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'A', 'B', 'C', 'D', 'E', 'F']

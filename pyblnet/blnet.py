@@ -58,7 +58,8 @@ class BLNET(object):
         self.blnet_web = None
         self.blnet_direct = None
         if use_web:
-            self.blnet_web = BLNETWeb("{}:{}".format(address, web_port), password, timeout)
+            self.blnet_web = BLNETWeb("{}:{}".format(address, web_port),
+                                      password, timeout)
         if use_ta:
             # The address might not have a resulting hostname
             # especially not if not prefixed with http://
@@ -135,7 +136,12 @@ class BLNET(object):
         else:
             raise EnvironmentError('Can\'t set values with blnet web disabled')
 
-    def get_value(self, name=None, id=None, type='digital', ret='value', cached=None):
+    def get_value(self,
+                  name=None,
+                  id=None,
+                  type='digital',
+                  ret='value',
+                  cached=None):
         """
           higher level interface to get a value or mode by name or id
           ret: can be 'value', 'mode'
@@ -157,27 +163,31 @@ class BLNET(object):
                 dic = v
 
         return val, dic, cached
-    
+
     def get_digital_value(self, name=None, id=None, cached=None):
-        return self.get_value(type='digital', ret='value', name=name, id=id, cached=cached)
+        return self.get_value(
+            type='digital', ret='value', name=name, id=id, cached=cached)
 
     def get_digital_mode(self, name=None, id=None, cached=None):
-        return self.get_value(type='digital', ret='mode', name=name, id=id, cached=cached)
+        return self.get_value(
+            type='digital', ret='mode', name=name, id=id, cached=cached)
 
     def get_analog_value(self, name=None, id=None, cached=None):
-        return self.get_value(type='analog', ret='value', name=name, id=id, cached=cached)
-    
+        return self.get_value(
+            type='analog', ret='value', name=name, id=id, cached=cached)
+
     def get_energy_value(self, name=None, id=None, cached=None):
-        return self.get_value(type='energy', ret='value', name=name, id=id, cached=cached)
+        return self.get_value(
+            type='energy', ret='value', name=name, id=id, cached=cached)
 
     def get_speed_value(self, name=None, id=None, cached=None):
-        return self.get_value(type='speed', ret='value', name=name, id=id, cached=cached)
-    
+        return self.get_value(
+            type='speed', ret='value', name=name, id=id, cached=cached)
+
     def get_power_value(self, name=None, id=None, cached=None):
-        return self.get_value(type='power', ret='value', name=name, id=id, cached=cached)
-    
-    
-            
+        return self.get_value(
+            type='power', ret='value', name=name, id=id, cached=cached)
+
     @staticmethod
     def _convert_web(values):
         """

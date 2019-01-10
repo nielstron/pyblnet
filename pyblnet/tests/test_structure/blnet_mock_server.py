@@ -38,7 +38,6 @@ class BLNETServer(HTTPServer):
 
 
 class BLNETRequestHandler(SimpleHTTPRequestHandler):
-
     def do_GET(self):
         """
         Handle get request, but check for errors in protocol
@@ -46,21 +45,17 @@ class BLNETRequestHandler(SimpleHTTPRequestHandler):
         """
         path = self.translate_path(self.path)
         # Only access that is allowed without login is main.html
-        if (
-            not Path(path) == SERVER_DIR
-            and not Path(path) == SERVER_DIR.joinpath('main.htm')
-            and not Path(path) == SERVER_DIR.joinpath('main.html')
-        ):
+        if (not Path(path) == SERVER_DIR
+                and not Path(path) == SERVER_DIR.joinpath('main.htm')
+                and not Path(path) == SERVER_DIR.joinpath('main.html')):
             if not self.server.logged_in:
                 self.send_error(403, "Not logged in, access denied")
                 return
             # Parse node sets
-            node_reg = re.compile(r'[?&]blw91A1200(?P<node>[0-9a-fA-F])=(?P<value>[1-3])')
+            node_reg = re.compile(
+                r'[?&]blw91A1200(?P<node>[0-9a-fA-F])=(?P<value>[1-3])')
             for match in node_reg.finditer(self.path):
-                self.server.set_node(
-                    match.group('node'),
-                    match.group('value')
-                )
+                self.server.set_node(match.group('node'), match.group('value'))
 
         # print(path)
         super().do_GET()
@@ -79,24 +74,33 @@ class BLNETRequestHandler(SimpleHTTPRequestHandler):
         for query in request_data:
             if query.startswith("blu"):
                 if query.split("=")[1] != "1":
-                    self.send_error(403, "Wrong user set: expected blu=1, got {}".format(query))
+                    self.send_error(
+                        403,
+                        "Wrong user set: expected blu=1, got {}".format(query))
                     return
                 blu = True
             elif query.startswith("blp"):
                 if query.split("=")[1] != self.server.password:
-                    self.send_error(403, "Wrong password: expected blp={}, got {}".format(self.server.password, query))
+                    self.send_error(
+                        403, "Wrong password: expected blp={}, got {}".format(
+                            self.server.password, query))
                     return
                 blp = True
             elif query.startswith("bll"):
                 if query.split("=")[1] != "Login":
-                    self.send_error(403, "Wrong bll spec, expected bll=Login, got {}".format(request_string))
+                    self.send_error(
+                        403,
+                        "Wrong bll spec, expected bll=Login, got {}".format(
+                            request_string))
                     return
                 bll = True
         if not (blu and blp and bll):
-            self.send_error(403, "Missing query param in {}".format(request_string))
+            self.send_error(403,
+                            "Missing query param in {}".format(request_string))
             return
         # Check for content type
-        if not self.headers.get('Content-Type') == 'application/x-www-form-urlencoded':
+        if not self.headers.get(
+                'Content-Type') == 'application/x-www-form-urlencoded':
             self.send_error(403, "Wrong content-type")
             return
         # All checks passed? set Set-Cookie header and do_GET
@@ -115,8 +119,8 @@ class BLNETRequestHandler(SimpleHTTPRequestHandler):
         only slightly changed method of the standard library
         """
         # abandon query parameters
-        path = path.split('?',1)[0]
-        path = path.split('#',1)[0]
+        path = path.split('?', 1)[0]
+        path = path.split('#', 1)[0]
         # Don't forget explicit trailing slash when normalizing. Issue17324
         trailing_slash = path.rstrip().endswith('/')
         try:
@@ -155,8 +159,8 @@ class BLNETRequestHandler(SimpleHTTPRequestHandler):
             if not parts.path.endswith('/'):
                 # redirect browser - doing basically what apache does
                 self.send_response(HTTPStatus.MOVED_PERMANENTLY)
-                new_parts = (parts[0], parts[1], parts[2] + '/',
-                             parts[3], parts[4])
+                new_parts = (parts[0], parts[1], parts[2] + '/', parts[3],
+                             parts[4])
                 new_url = urllib.parse.urlunsplit(new_parts)
                 self.send_header("Location", new_url)
                 self.end_headers()
@@ -180,12 +184,11 @@ class BLNETRequestHandler(SimpleHTTPRequestHandler):
             self.send_header("Content-type", ctype)
             fs = os.fstat(f.fileno())
             self.send_header("Content-Length", str(fs[6]))
-            self.send_header("Last-Modified", self.date_time_string(fs.st_mtime))
+            self.send_header("Last-Modified",
+                             self.date_time_string(fs.st_mtime))
             # Addition: send cookie
-            if (
-                self.server.logged_in is not None
-                and self.server.logged_in == self.headers.get('Cookie')
-            ):
+            if (self.server.logged_in is not None
+                    and self.server.logged_in == self.headers.get('Cookie')):
                 self.send_header('Set-Cookie', 'C1A3')
             self.end_headers()
             return f
@@ -210,8 +213,7 @@ class BLNETRequestHandler(SimpleHTTPRequestHandler):
         #  - RFC7231: 6.3.6. 205(Reset Content)
         body = None
         if (code >= 200 and
-                code not in (HTTPStatus.NO_CONTENT,
-                             HTTPStatus.RESET_CONTENT,
+                code not in (HTTPStatus.NO_CONTENT, HTTPStatus.RESET_CONTENT,
                              HTTPStatus.NOT_MODIFIED)):
             # HTML encode to prevent Cross Site Scripting attacks
             # (see bug #1100201)
