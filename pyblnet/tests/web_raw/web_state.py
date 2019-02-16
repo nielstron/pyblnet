@@ -91,32 +91,38 @@ STATE_ANALOG = [{
     'name': 'TSP.oben',
     'unit_of_measurement': '°C',
     'value': '47.1'
-}, {
+},
+{
     'id': '3',
     'name': 'TSP.unten',
     'unit_of_measurement': '°C',
     'value': '57.8'
-}, {
+},
+{
     'id': '4',
     'name': 'THeizkr.VL',
     'unit_of_measurement': '°C',
     'value': '45.8'
-}, {
+},
+{
     'id': '5',
     'name': 'Temp.Aussen',
     'unit_of_measurement': '°C',
     'value': '1.1'
-}, {
+},
+{
     'id': '6',
     'name': 'Temp.Raum',
     'unit_of_measurement': '°C',
     'value': '24.1'
-}, {
+},
+{
     'id': '7',
     'name': 'T\xa0Kaminofen',
     'unit_of_measurement': '°C',
     'value': '55.8'
-}, {
+},
+{
     'id': '9',
     'name': 'TZirku.RL',
     'unit_of_measurement': '°C',
@@ -124,8 +130,8 @@ STATE_ANALOG = [{
 }]
 
 STATE_DIGITAL = [{
-    'id': '1',
-    'mode': 'AUTO',
+'id': '1',
+'mode': 'AUTO',
     'name': 'Pumpe-Solar',
     'value': 'AUS'
 }, {

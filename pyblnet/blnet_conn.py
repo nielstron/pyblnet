@@ -95,7 +95,8 @@ class BLNETDirect(object):
                     self._fetch_size = 126
 
                 self._address_end = (
-                    (0x07FFFF // self._address_inc) * self._address_inc)
+                        (0x07FFFF // self._address_inc) * self._address_inc
+                )
 
                 # check address validity
                 if (start_address != b'0xFFFFFF'
