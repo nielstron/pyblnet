@@ -196,12 +196,10 @@ class BLNETWeb(object):
 
         # search for data by regular expression
         match_iter = re.finditer(
-            "(?P<id>\d+):&nbsp;(?P<name>.+)\n" +
-            "(&nbsp;){3,6}(?P<value>\d+,\d+) " +
-            "(?P<unit_of_measurement>.+?) &nbsp;&nbsp;PAR?", data_raw)
-        match = next(match_iter, False)
+            r"(?P<id>\d+):&nbsp;(?P<name>.+)\n(&nbsp;){3,6}(?P<value>\d+,\d+) (?P<unit_of_measurement>.+?) &nbsp;&nbsp;PAR?",
+            data_raw)
         # parse a dict of the match and save them all in a list
-        while match:
+        for match in match_iter:
             match_dict = match.groupdict()
             # convert html entities to unicode characters
             for key in match_dict.keys():
@@ -210,7 +208,6 @@ class BLNETWeb(object):
                 match_dict[key] = match_dict[key].replace(",", ".")
             # and append formatted dict
             data.append(match_dict)
-            match = next(match_iter, False)
         return data
 
     def read_digital_values(self):
@@ -243,19 +240,16 @@ class BLNETWeb(object):
 
         # search for data by regular expression
         match_iter = re.finditer(
-            "(?P<id>\d+):&nbsp;(?P<name>.+)\n" +
-            "&nbsp;&nbsp;&nbsp;&nbsp;(?P<mode>(AUTO|HAND))/" +
-            "(?P<value>(AUS|EIN))", data_raw)
-        match = next(match_iter, False)
+            r"(?P<id>\d+):&nbsp;(?P<name>.+)\n&nbsp;&nbsp;&nbsp;&nbsp;(?P<mode>(AUTO|HAND))/(?P<value>(AUS|EIN))",
+            data_raw)
         # parse a dict of the match and save them all in a list
-        while match:
+        for match in match_iter:
             match_dict = match.groupdict()
             # convert html entities to unicode characters
             for key in match_dict.keys():
                 match_dict[key] = html.unescape(match_dict[key])
             # and append formatted dict
             data.append(match_dict)
-            match = next(match_iter, False)
         return data
 
     def set_digital_value(self, digital_id, value):
