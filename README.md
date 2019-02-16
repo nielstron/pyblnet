@@ -9,10 +9,12 @@ Documentation on the modules and their methods can be found with the methods and
 
 Two interfaces to BLNet exist and both are supported:
 - Webinterface  - Class BLnetWeb
-- BLNet-Direct protocol ([1]) - Class BLNETDirect
+- BLNet-Direct protocol [1] - Class BLNETDirect
 
 The class BLNET is a wrapper around the two classes. When initializing the class, the two interfaces can be activated/deactivated. 
-BLNetDirect provides 'analog', 'digital',  'speed', 'energy', 'power', whereas BLnetWeb supports 'analog' and 'digital' only. If both are active, BLNetDirect has priority.
+BLNetDirect provides 'analog', 'digital',  'speed', 'energy', 'power', whereas BLnetWeb supports 'analog' and 'digital' only.
+If both are active, BLNetDirect has priority.
+Setting switches and reading their manual/auto state is only possible via the BLNetWeb interface.
 
 ### Usage
 
