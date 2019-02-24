@@ -186,6 +186,9 @@ class BLNETWeb(object):
             return None
         # Parse  DOM object from HTMLCode
         dom = htmldom.HtmlDom().createDom(r.text)
+        # Check if we didn't fail in access
+        if 'BL-Net Zugang verweigert' in dom.find('title').text():
+            return None
         # get the element containing the interesting information
         dom = dom.find("div.c")[1]
         # filter out the text
@@ -229,6 +232,9 @@ class BLNETWeb(object):
             return None
         # Parse  DOM object from HTMLCode
         dom = htmldom.HtmlDom().createDom(r.text)
+        # Check if we didn't fail in access
+        if 'BL-Net Zugang verweigert' in dom.find('title').text():
+            return None
         # get the element containing the interesting information
         dom = dom.find("div.c")[1]
 

@@ -22,6 +22,9 @@ class BLNETServer(HTTPServer):
     password = None
     # access to digital nodes
     nodes = {}
+    # Enable option to block server
+    # (sends access denied all the time, for whatever reason)
+    blocked = False
 
     def set_password(self, password):
         self.password = password
@@ -36,13 +39,23 @@ class BLNETServer(HTTPServer):
     def get_node(self, id):
         return self.nodes.get(id)
 
+    def set_blocked(self):
+        self.blocked = True
+
+    def unset_blocked(self):
+        self.blocked = False
+
 
 class BLNETRequestHandler(SimpleHTTPRequestHandler):
+
     def do_GET(self):
         """
         Handle get request, but check for errors in protocol
         :return:
         """
+        if self.server.blocked:
+            self.send_error(403, "Access denied because server is blocked")
+            return
         path = self.translate_path(self.path)
         # Only access that is allowed without login is main.html
         if (not Path(path) == SERVER_DIR
@@ -61,6 +74,9 @@ class BLNETRequestHandler(SimpleHTTPRequestHandler):
         super().do_GET()
 
     def do_POST(self):
+        if self.server.blocked:
+            # apparently login may still may possible, access may be denied anyway
+            pass
         # Result of self.rfile.read() if correct POST request:
         # b'blu=1&blp=0123&bll=Login'
         perfect = b'blu=1&blp=0123&bll=Login'

@@ -68,6 +68,8 @@ class BLNETWebTest(unittest.TestCase):
     def test_blnet(self):
         """ Test finding the blnet """
         self.assertTrue(test_blnet(self.url, timeout=10))
+        self.server.set_blocked()
+        self.assertTrue(test_blnet(self.url, timeout=10))
 
     def test_blnet_login(self):
         """ Test logging in """
@@ -135,6 +137,13 @@ class BLNETWebTest(unittest.TestCase):
         self.assertEqual(self.server.get_node('8'), '3')
         blnet.turn_off(1)
         self.assertEqual(self.server.get_node('1'), '1')
+
+    def test_blnet_fetch_error(self):
+        """ Test fetching data in higher level class with missing password (or otherwise denied access to the data) """
+        self.assertEqual(
+            BLNET(ADDRESS, password=None, timeout=10, use_ta=False, web_port=self.port).fetch(),
+            {'analog': {}, 'digital': {}, 'energy': {}, 'power': {}, 'speed': {}}
+        )
 
     def test_blnet_web_analog(self):
         """ Test reading analog values """
