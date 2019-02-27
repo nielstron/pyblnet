@@ -5,7 +5,7 @@ from .blnet_web import BLNETWeb, test_blnet
 from .blnet_conn import BLNETDirect
 from .blnet import BLNET
 
-VERSION = (0, 7, 4)
+VERSION = (0, 7, 5)
 
 __version__ = '.'.join([str(i) for i in VERSION])
 __author__ = 'nielstron'
