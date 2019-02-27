@@ -7,6 +7,8 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
+import pyblnet
+
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
@@ -15,10 +17,10 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='PyBLNET',
-    version='0.7.4',
+    version=pyblnet.__version__,
     description='Automate wireless communication to UVR1611 via BL-NET',
-    author='Niels Mündler',
-    author_email='n.muendler@web.de',
+    author=pyblnet.__author__,
+    author_email=pyblnet.__author_email__,
     url='https://github.com/nielstron/pyblnet/',
     py_modules=['pyblnet'],
     packages=find_packages(),
@@ -26,7 +28,7 @@ setup(
     install_requires=['htmldom', 'requests'],
     long_description=long_description,
     long_description_content_type='text/markdown',
-    license='MIT',
+    license=pyblnet.__license__,
     classifiers=[
         'Development Status :: 4 - Beta',
         # Indicate who your project is intended for
