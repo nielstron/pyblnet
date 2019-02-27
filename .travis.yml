@@ -15,6 +15,7 @@ matrix:
 install:
   - pip install coverage
   - pip install coveralls
+  - pip install -e .
 
 script:
   - coverage run --source=pyblnet setup.py test
