@@ -199,7 +199,7 @@ class BLNETWeb(object):
 
         # search for data by regular expression
         match_iter = re.finditer(
-            r"(?P<id>\d+):&nbsp;(?P<name>.+)\n(&nbsp;){3,6}(?P<value>\d+,\d+) (?P<unit_of_measurement>.+?) &nbsp;&nbsp;PAR?",
+            r"(?P<id>\d+):&nbsp;(?P<name>.+)\n(&nbsp;){3,6}(?P<value>-?\d+,\d+) (?P<unit_of_measurement>.+?) &nbsp;&nbsp;PAR?",
             data_raw)
         # parse a dict of the match and save them all in a list
         for match in match_iter:
