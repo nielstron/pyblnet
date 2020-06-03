@@ -44,6 +44,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
     ],
     keywords='python uvr1611 blnet technische alternative home automation iot',
     python_requires='>=3',
