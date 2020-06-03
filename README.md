@@ -11,6 +11,9 @@ Two interfaces to BLNet exist and both are supported:
 - Webinterface  - Class BLnetWeb
 - BLNet-Direct protocol [1] - Class BLNETDirect
 
+However, as of now, there is no testing on the BLNet-Direct protocol *of any kind*, so enabling it is discouraged until the interface is fixed.
+Parsing the data via the web interface is the preferred way of accessing the BLNet for now.
+
 The class BLNET is a wrapper around the two classes. When initializing the class, the two interfaces can be activated/deactivated. 
 BLNetDirect provides 'analog', 'digital',  'speed', 'energy', 'power', whereas BLnetWeb supports 'analog' and 'digital' only.
 If both are active, BLNetDirect has priority.
