@@ -41,7 +41,7 @@ class BLNET(object):
                  timeout=5,
                  max_retries=5,
                  use_web=True,
-                 use_ta=True):
+                 use_ta=False):
         """
         If a connection (Web or TA/Direct) should not be used,
         set the corresponding use_* to False
