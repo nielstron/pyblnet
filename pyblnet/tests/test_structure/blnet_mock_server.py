@@ -41,7 +41,8 @@ class BLNETServer(HTTPServer):
         if self.logged_in is not None:
             return False
         self.logged_in = LOGIN_COOKIES[self.current_log_in_cookie]
-        self.current_log_in_cookie = (self.current_log_in_cookie + 1) % COOKIE_NUM
+        self.current_log_in_cookie += 1
+        self.current_log_in_cookie %= COOKIE_NUM
         return self.logged_in
 
     def log_out(self):
@@ -66,7 +67,7 @@ class BLNETServer(HTTPServer):
 class BLNETRequestHandler(SimpleHTTPRequestHandler):
 
     # uncomment on higher python versions for better debugging
-    #server: BLNETServer
+    # server: BLNETServer
 
     def do_GET(self):
         """

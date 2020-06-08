@@ -4,7 +4,9 @@
 # general requirements
 import unittest
 from .test_structure.server_control import Server
-from .test_structure.blnet_mock_server import BLNETServer, BLNETRequestHandler, PASSWORD
+from .test_structure.blnet_mock_server import (
+    BLNETServer, BLNETRequestHandler, PASSWORD
+)
 
 # For the server in this case
 import time
@@ -78,9 +80,8 @@ class BLNETWebTest(unittest.TestCase):
         with BLNETWeb(self.url, password=PASSWORD, timeout=10) as blnet:
             self.assertTrue(blnet.logged_in())
         # test without http
-        with BLNETWeb("{}:{}".format(ADDRESS, self.port),
-                password=PASSWORD,
-                timeout=10) as blnet:
+        blnet = BLNETWeb("{}:{}".format(ADDRESS, self.port), password=PASSWORD, timeout=10)
+        with blnet as blnet:
             self.assertTrue(blnet.logged_in())
 
     def test_blnet_fetch(self):
