@@ -65,7 +65,8 @@ class BLNETServer(HTTPServer):
 
 class BLNETRequestHandler(SimpleHTTPRequestHandler):
 
-    server: BLNETServer
+    # uncomment on higher python versions for better debugging
+    #server: BLNETServer
 
     def do_GET(self):
         """
