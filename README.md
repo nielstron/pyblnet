@@ -22,13 +22,15 @@ Setting switches and reading their manual/auto state is only possible via the BL
 ### Usage
 
 ```python
+from pyblnet import test_blnet, BLNET, BLNETWeb, BLNETDirect
+
 ip = '192.168.178.10'
 
 # Check if there is a blnet at given address
 test_blnet(ip) # -> True/False
 
 # Convenient high level interface
-blnet = BLNET(ip, timeout=5)
+blnet = BLNET(ip, password='pass', timeout=5)
 
 # Control a switch by its ID
 blnet.turn_on(10)
@@ -44,12 +46,17 @@ print(blnet.fetch())
 # note that the direct use of these modules is discouraged though
 
 # Fetch the latest data via web interface
-blnet = BLNETWeb(ip, timeout=5)
-print(blnet.read_analog_values())
-print(blnet.read_digital_values())
+# Note that manual log in and log out are required
+# when not using the with statement
+with BLNETWeb(ip, password='pass', timeout=5) as blnet_session:
+    print(blnet_session.read_analog_values())
+    print(blnet_session.read_digital_values())
 
-# For publishing values
-blnet.set_digital_value('10', 'AUS')
+    # For publishing values
+    blnet_session.set_digital_value('10', 'AUS')
+    # Note that without explicit log out,
+    # the BLNET will block any further web access for the next 150s
+    # this is handled automatically when using the with statement
 
 # Fetch data via the Protocol developed by TA
 blnet = BLNETDirect(ip)

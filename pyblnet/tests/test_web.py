@@ -147,45 +147,44 @@ class BLNETWebTest(unittest.TestCase):
 
     def test_blnet_web_analog(self):
         """ Test reading analog values """
-        self.assertEqual(
-            BLNETWeb(self.url, password=PASSWORD,
-                     timeout=10).read_analog_values(), STATE_ANALOG)
+        with BLNETWeb(self.url, password=PASSWORD, timeout=10) as blnet:
+            self.assertEqual(
+                blnet.read_analog_values(), STATE_ANALOG)
 
     def test_blnet_web_digital(self):
         """ Test reading digital values"""
-        self.assertEqual(
-            BLNETWeb(self.url, password=PASSWORD,
-                     timeout=10).read_digital_values(), STATE_DIGITAL)
+        with BLNETWeb(self.url, password=PASSWORD, timeout=10) as blnet:
+            self.assertEqual(blnet.read_digital_values(), STATE_DIGITAL)
 
     def test_blnet_web_set_digital(self):
         """ Test setting digital values """
-        blnet = BLNETWeb(self.url, password=PASSWORD, timeout=10)
-        blnet.set_digital_value(10, '2')
-        self.assertEqual(self.server.get_node('A'), '2')
-        blnet.set_digital_value(9, 'EIN')
-        self.assertEqual(self.server.get_node('9'), '2')
-        blnet.set_digital_value(8, 'auto')
-        self.assertEqual(self.server.get_node('8'), '3')
-        blnet.set_digital_value(1, 'on')
-        self.assertEqual(self.server.get_node('1'), '2')
-        blnet.set_digital_value(1, 'AUS')
-        self.assertEqual(self.server.get_node('1'), '1')
-        blnet.set_digital_value(5, 3)
-        self.assertEqual(self.server.get_node('5'), '3')
-        blnet.set_digital_value(4, True)
-        self.assertEqual(self.server.get_node('4'), '2')
-        blnet.set_digital_value(6, False)
-        self.assertEqual(self.server.get_node('6'), '1')
-        try:
-            blnet.set_digital_value(0, 'EIN')
-            self.fail("Didn't catch wrong id 0")
-        except ValueError:
-            pass
-        try:
-            blnet.set_digital_value(16, 'EIN')
-            self.fail("Didn't catch wrong id 16")
-        except ValueError:
-            pass
+        with BLNETWeb(self.url, password=PASSWORD, timeout=10) as blnet:
+            blnet.set_digital_value(10, '2')
+            self.assertEqual(self.server.get_node('A'), '2')
+            blnet.set_digital_value(9, 'EIN')
+            self.assertEqual(self.server.get_node('9'), '2')
+            blnet.set_digital_value(8, 'auto')
+            self.assertEqual(self.server.get_node('8'), '3')
+            blnet.set_digital_value(1, 'on')
+            self.assertEqual(self.server.get_node('1'), '2')
+            blnet.set_digital_value(1, 'AUS')
+            self.assertEqual(self.server.get_node('1'), '1')
+            blnet.set_digital_value(5, 3)
+            self.assertEqual(self.server.get_node('5'), '3')
+            blnet.set_digital_value(4, True)
+            self.assertEqual(self.server.get_node('4'), '2')
+            blnet.set_digital_value(6, False)
+            self.assertEqual(self.server.get_node('6'), '1')
+            try:
+                blnet.set_digital_value(0, 'EIN')
+                self.fail("Didn't catch wrong id 0")
+            except ValueError:
+                pass
+            try:
+                blnet.set_digital_value(16, 'EIN')
+                self.fail("Didn't catch wrong id 16")
+            except ValueError:
+                pass
 
     def tearDown(self):
         self.server_control.stop_server()

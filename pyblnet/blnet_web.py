@@ -70,6 +70,13 @@ class BLNETWeb(object):
         self.password = password
         self._timeout = timeout
 
+    def __enter__(self):
+        self.log_in()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.log_out()
+
     def logged_in(self):
         """
         Determines whether the object is still connected to the BLNET
@@ -153,10 +160,6 @@ class BLNETWeb(object):
         
         Return: Still logged in (indicating successful node change)
         """
-        # ensure to be logged in
-        if not self.log_in():
-            return False
-
         # send the request to change the node
         try:
             r = requests.get(
@@ -173,10 +176,6 @@ class BLNETWeb(object):
         Reads all analog values (temperatures, speeds) from the web interface
         and returns list of quadruples of id, name, value, unit of measurement
         """
-        # ensure to be logged in
-        if not self.log_in():
-            return None
-
         try:
             r = requests.get(
                 self.ip + "/580500.htm",
@@ -219,10 +218,6 @@ class BLNETWeb(object):
         and returns list of quadruples of id, name, mode (AUTO/HAND), value 
         (EIN/AUS)
         """
-        # ensure to be logged in
-        if not self.log_in():
-            return None
-
         try:
             r = requests.get(
                 self.ip + "/580600.htm",
@@ -280,10 +275,6 @@ class BLNETWeb(object):
             raise ValueError(
                 'Device id can\'t be larger than 15, was {}'.format(
                     digital_id))
-        # ensure to be logged in
-        if not self.log_in():
-            return False
-
         # transform input value to 'EIN' or 'AUS'
         if isinstance(value, str):
             if value.lower() == 'AUTO'.lower() or value == '3':

@@ -80,12 +80,13 @@ class BLNET(object):
             'power': {},
         }
         if self.blnet_web:
-            if node is not None:
-                self.blnet_web.set_node(node)
-            data['analog'] = self._convert_web(
-                self.blnet_web.read_analog_values())
-            data['digital'] = self._convert_web(
-                self.blnet_web.read_digital_values())
+            with self.blnet_web as blnet_session:
+                if node is not None:
+                    blnet_session.set_node(node)
+                data['analog'] = self._convert_web(
+                    blnet_session.read_analog_values())
+                data['digital'] = self._convert_web(
+                    blnet_session.read_digital_values())
         if self.blnet_direct:
             direct = self.blnet_direct.get_latest(self.max_retries)[0]
             # Override values for analog and digital as values are
@@ -124,15 +125,15 @@ class BLNET(object):
 
     def _turn(self, digital_id, value, can_node=None):
         if self.blnet_web:
-            if not self.blnet_web.log_in():
-                raise ConnectionError('Could not log in')
-            if can_node is not None:
-                if not self.blnet_web.set_node(can_node):
-                    raise ConnectionError('Could not set node')
-            if not self.blnet_web.set_digital_value(digital_id, value):
-                raise ConnectionError('Failed to set value')
-            else:
-                return True
+            with self.blnet_web as blnet_session:
+                if not blnet_session.logged_in():
+                    raise ConnectionError('Could not log in')
+                if can_node is not None:
+                    if not blnet_session.set_node(can_node):
+                        raise ConnectionError('Could not set node')
+                if not blnet_session.set_digital_value(digital_id, value):
+                    raise ConnectionError('Failed to set value')
+            return True
         else:
             raise EnvironmentError('Can\'t set values with blnet web disabled')
 
