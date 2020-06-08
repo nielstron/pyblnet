@@ -11,13 +11,20 @@ import posixpath
 from pathlib import Path
 
 SERVER_DIR = Path(__file__).parent or Path('.')
+PASSWORD = '0123'
+
+COOKIE_RANGE = (0xAAAA, 0xFFFF)
+COOKIE_NUM = COOKIE_RANGE[1] - COOKIE_RANGE[0]
+LOGIN_COOKIES = [hex(i) for i in range(*COOKIE_RANGE)]
 
 
 class BLNETServer(HTTPServer):
 
+    current_log_in_cookie = 0
+
     # Currently allowed login cookie
     # or none if no one logged in
-    logged_in = True
+    logged_in = None
     # no login necessary
     password = None
     # access to digital nodes
@@ -30,8 +37,18 @@ class BLNETServer(HTTPServer):
         self.password = password
         self.logged_in = None
 
-    def set_logged_in(self, cookie):
-        self.logged_in = cookie
+    def log_in(self):
+        if self.logged_in is not None:
+            return False
+        self.logged_in = LOGIN_COOKIES[self.current_log_in_cookie]
+        self.current_log_in_cookie = (self.current_log_in_cookie + 1) % COOKIE_NUM
+        return self.logged_in
+
+    def log_out(self):
+        self.logged_in = None
+
+    def is_logged_in(self, cookie):
+        return cookie is not None and self.logged_in == cookie
 
     def set_node(self, id, value):
         self.nodes[id] = value
@@ -48,6 +65,8 @@ class BLNETServer(HTTPServer):
 
 class BLNETRequestHandler(SimpleHTTPRequestHandler):
 
+    server: BLNETServer
+
     def do_GET(self):
         """
         Handle get request, but check for errors in protocol
@@ -57,11 +76,14 @@ class BLNETRequestHandler(SimpleHTTPRequestHandler):
             self.send_error(403, "Access denied because server is blocked")
             return
         path = self.translate_path(self.path)
+        if (self.server.is_logged_in(self.headers.get("cookie"))
+                and "?blL=1" in self.requestline):
+            self.server.log_out()
         # Only access that is allowed without login is main.html
         if (not Path(path) == SERVER_DIR
                 and not Path(path) == SERVER_DIR.joinpath('main.htm')
                 and not Path(path) == SERVER_DIR.joinpath('main.html')):
-            if not self.server.logged_in:
+            if not self.server.is_logged_in(self.headers.get("cookie")):
                 self.send_error(403, "Not logged in, access denied")
                 return
             # Parse node sets
@@ -121,8 +143,11 @@ class BLNETRequestHandler(SimpleHTTPRequestHandler):
             return
         # All checks passed? set Set-Cookie header and do_GET
         # random cookie - do not hardcode
-        self.server.set_logged_in('C1A3')
-        self.headers.add_header('Cookie', 'C1A3')
+        cookie = self.server.log_in()
+        if not cookie:
+            self.send_error(403, "Previous user did not log out")
+            return
+        self.headers.add_header('Cookie', cookie)
         self.do_GET()
 
     def translate_path(self, path):
@@ -203,9 +228,8 @@ class BLNETRequestHandler(SimpleHTTPRequestHandler):
             self.send_header("Last-Modified",
                              self.date_time_string(fs.st_mtime))
             # Addition: send cookie
-            if (self.server.logged_in is not None
-                    and self.server.logged_in == self.headers.get('Cookie')):
-                self.send_header('Set-Cookie', 'C1A3')
+            if self.server.is_logged_in(self.headers.get('Cookie')):
+                self.send_header('Set-Cookie', self.server.logged_in)
             self.end_headers()
             return f
         except:

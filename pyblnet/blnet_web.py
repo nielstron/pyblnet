@@ -288,9 +288,9 @@ class BLNETWeb(object):
             else:
                 raise ValueError("Illegal input string {}".format(value))
         elif isinstance(value, int) and not isinstance(value, bool):
-            if value is 3 or value is 2 or value is 1:
+            if value in (1, 2, 3):
                 value = str(value)
-            elif value is 0:
+            elif value == 0:
                 value = '1'
             else:
                 raise ValueError("Illegal input integer {}".format(value))

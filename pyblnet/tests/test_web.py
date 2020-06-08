@@ -4,7 +4,7 @@
 # general requirements
 import unittest
 from .test_structure.server_control import Server
-from .test_structure.blnet_mock_server import BLNETServer, BLNETRequestHandler
+from .test_structure.blnet_mock_server import BLNETServer, BLNETRequestHandler, PASSWORD
 
 # For the server in this case
 import time
@@ -14,7 +14,6 @@ from pyblnet import BLNET, test_blnet, BLNETWeb
 from .web_raw.web_state import STATE, STATE_ANALOG, STATE_DIGITAL
 
 ADDRESS = 'localhost'
-PASSWORD = '0123'
 
 
 class OfflineTest(unittest.TestCase):
@@ -27,7 +26,7 @@ class OfflineTest(unittest.TestCase):
 
     def test_blnet_web(self):
         try:
-            blnet = BLNETWeb(self.url)
+            BLNETWeb(self.url)
             self.fail("Didn't throw an exception for offline blnetweb")
         except ValueError:
             pass
@@ -71,16 +70,18 @@ class BLNETWebTest(unittest.TestCase):
         self.server.set_blocked()
         self.assertTrue(test_blnet(self.url, timeout=10))
 
-    def test_blnet_login(self):
-        """ Test logging in """
-        self.assertTrue(
-            BLNETWeb(self.url, password=PASSWORD, timeout=10).log_in())
+    def test_blnet_web_log_in(self):
+        """
+        Test logging in via different urls
+        and that log out after a with clause happens correctly
+        """
+        with BLNETWeb(self.url, password=PASSWORD, timeout=10) as blnet:
+            self.assertTrue(blnet.logged_in())
         # test without http
-        self.assertTrue(
-            BLNETWeb(
-                "{}:{}".format(ADDRESS, self.port),
+        with BLNETWeb("{}:{}".format(ADDRESS, self.port),
                 password=PASSWORD,
-                timeout=10).log_in())
+                timeout=10) as blnet:
+            self.assertTrue(blnet.logged_in())
 
     def test_blnet_fetch(self):
         """ Test fetching data in higher level class """
@@ -185,6 +186,14 @@ class BLNETWebTest(unittest.TestCase):
                 self.fail("Didn't catch wrong id 16")
             except ValueError:
                 pass
+
+    def test_blnet_web_log_out(self):
+        """ Test setting digital values """
+        blnet = BLNETWeb(self.url, password=PASSWORD, timeout=10)
+        self.assertFalse(blnet.logged_in())
+        with blnet as blnet:
+            self.assertTrue(blnet.logged_in())
+        self.assertFalse(blnet.logged_in())
 
     def tearDown(self):
         self.server_control.stop_server()
