@@ -198,16 +198,20 @@ class BLNETWeb(object):
 
         # search for data by regular expression
         match_iter = re.finditer(
-            r"(?P<id>\d+):&nbsp;(?P<name>.+)\n(&nbsp;){3,6}(?P<value>-?\d+,\d+) (?P<unit_of_measurement>.+?) &nbsp;&nbsp;PAR?",
+            r"(?P<id>\d+):&nbsp;(?P<name>.+)\n(&nbsp;){3,6}(?P<value>(-&nbsp;)?\d+,\d+) (?P<unit_of_measurement>.+?) &nbsp;&nbsp;PAR?",
             data_raw)
         # parse a dict of the match and save them all in a list
         for match in match_iter:
             match_dict = match.groupdict()
             # convert html entities to unicode characters
-            for key in match_dict.keys():
-                match_dict[key] = html.unescape(match_dict[key])
-                # also replace decimal "," by "."
-                match_dict[key] = match_dict[key].replace(",", ".")
+            for key, value in match_dict.items():
+                # replace &nbsp; by " " since it is not unescaped as expected
+                value = value.replace("&nbsp;", " ")
+                if key == "value":
+                    # for values
+                    # also replace decimal "," by "." and remove "&nbsp;" completely
+                    value = value.replace(",", ".").replace(" ", "")
+                match_dict[key] = html.unescape(value)
             # and append formatted dict
             data.append(match_dict)
         return data
@@ -247,8 +251,9 @@ class BLNETWeb(object):
         for match in match_iter:
             match_dict = match.groupdict()
             # convert html entities to unicode characters
-            for key in match_dict.keys():
-                match_dict[key] = html.unescape(match_dict[key])
+            for key, value in match_dict.items():
+                value = value.replace("&nbsp;", " ")
+                match_dict[key] = html.unescape(value)
             # and append formatted dict
             data.append(match_dict)
         return data
