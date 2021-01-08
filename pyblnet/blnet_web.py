@@ -205,11 +205,14 @@ class BLNETWeb(object):
         for match in match_iter:
             match_dict = match.groupdict()
             # convert html entities to unicode characters
-            for key in match_dict.keys():
+            for key, value in match_dict.items():
+                # replace &nbsp; by " " since it is not unescaped as expected
+                value = value.replace("&nbsp;", " ")
                 if key == "value":
-                    match_dict[key] = match_dict[key].replace(",", ".").replace("&nbsp;", "")
-                match_dict[key] = html.unescape(match_dict[key])
-                # also replace decimal "," by "." and remove "&nbsp;"
+                    # for values
+                    # also replace decimal "," by "." and remove "&nbsp;" completely
+                    value = value.replace(",", ".").replace(" ", "")
+                match_dict[key] = html.unescape(value)
             # and append formatted dict
             data.append(match_dict)
         return data
@@ -253,8 +256,9 @@ class BLNETWeb(object):
         for match in match_iter:
             match_dict = match.groupdict()
             # convert html entities to unicode characters
-            for key in match_dict.keys():
-                match_dict[key] = html.unescape(match_dict[key])
+            for key, value in match_dict.items():
+                value = value.replace("&nbsp;", " ")
+                match_dict[key] = html.unescape(value)
             # and append formatted dict
             data.append(match_dict)
         return data
