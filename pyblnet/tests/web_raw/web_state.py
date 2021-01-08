@@ -23,7 +23,7 @@ STATE = {'analog': {1: {'id': '1',
                 'unit_of_measurement': '°C',
                 'value': '24.6'},
             7: {'id': '7',
-                'name': 'T\xa0Kaminofen',
+                'name': 'T Kaminofen',
                 'unit_of_measurement': '°C',
                 'value': '20.9'},
             9: {'id': '9',
@@ -48,7 +48,7 @@ STATE = {'analog': {1: {'id': '1',
                  'value': 'AUS'},
              7: {'id': '7',
                  'mode': 'AUTO',
-                 'name': 'P\xa0Kaminofen',
+                 'name': 'P Kaminofen',
                  'value': 'EIN'},
              10: {'id': '10',
                   'mode': 'HAND',
@@ -92,7 +92,7 @@ STATE_ALTERNATIVE = {
         },
         7: {
             'id': '7',
-            'name': 'T\xa0Kaminofen',
+            'name': 'T Kaminofen',
             'value': '55.8',
             'unit_of_measurement': '°C'
         },
@@ -130,7 +130,7 @@ STATE_ALTERNATIVE = {
         },
         7: {
             'id': '7',
-            'name': 'P\xa0Kaminofen',
+            'name': 'P Kaminofen',
             'mode': 'AUTO',
             'value': 'EIN'
         },
@@ -159,7 +159,7 @@ STATE_ANALOG = [{'id': '1', 'name': 'TKollektor', 'unit_of_measurement': '°C', 
   'value': '-72.3'},
  {'id': '6', 'name': 'Temp.Raum', 'unit_of_measurement': '°C', 'value': '24.6'},
  {'id': '7',
-  'name': 'T\xa0Kaminofen',
+  'name': 'T Kaminofen',
   'unit_of_measurement': '°C',
   'value': '20.9'},
  {'id': '9', 'name': 'TZirku.RL', 'unit_of_measurement': '°C', 'value': '36.6'}]
@@ -196,7 +196,7 @@ STATE_ANALOG_ALTERNATIVE = [{
 },
 {
     'id': '7',
-    'name': 'T\xa0Kaminofen',
+    'name': 'T Kaminofen',
     'unit_of_measurement': '°C',
     'value': '55.8'
 },
@@ -230,7 +230,7 @@ STATE_DIGITAL = [{
 }, {
     'id': '7',
     'mode': 'AUTO',
-    'name': 'P\xa0Kaminofen',
+    'name': 'P Kaminofen',
     'value': 'EIN'
 }, {
     'id': '10',
