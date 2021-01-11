@@ -32,7 +32,7 @@ def test_blnet(ip, timeout=5, id=0):
     # Parse  DOM object from HTMLCode
     dom = htmldom.HtmlDom().createDom(r.text)
     # either a 'Zugriff verweigert' message is shown
-    if 'BL-Net Zugang verweigert' in dom.find('title').text():
+    if 'BL-Net'.lower() in dom.find('title').text().lower():
         return True
     # or (more often) the BL-NET Menü
     if 'BL-NET' in dom.find('div#head').text():
@@ -186,10 +186,13 @@ class BLNETWeb(object):
         # Parse  DOM object from HTMLCode
         dom = htmldom.HtmlDom().createDom(r.text)
         # Check if we didn't fail in access
-        if 'BL-Net Zugang verweigert' in dom.find('title').text():
-            return None
+        #if 'BL-Net Zugang verweigert' in dom.find('title').text():
+        #    return None
         # get the element containing the interesting information
         dom = dom.find("div.c")[1]
+        # in case of access denied or other errors, return None
+        if dom is None:
+            return dom
         # filter out the text
         data_raw = dom.text()
 
