@@ -130,9 +130,15 @@ class BLNET(object):
                     raise ConnectionError('Could not log in')
                 if can_node is not None:
                     if not blnet_session.set_node(can_node):
-                        raise ConnectionError('Could not set node')
+                        raise ConnectionError(
+                            "Could not set can node to {}".format(can_node)
+                        )
                 if not blnet_session.set_digital_value(digital_id, value):
-                    raise ConnectionError('Failed to set value')
+                    raise ConnectionError(
+                        "Failed to set digital switch {} to value {}".format(
+                            digital_id, value
+                        )
+                    )
             return True
         else:
             raise EnvironmentError('Can\'t set values with blnet web disabled')
