@@ -14,8 +14,8 @@ matrix:
   fast_finish: true
 
 install:
-  - pip install coverage
-  - pip install coveralls
+  - if [[ $TRAVIS_PYTHON_VERSION == 3.7 ]]; then pip install -U importlib_metadata; fi
+  - pip install coverage coveralls
   - pip install -e .
 
 script:
