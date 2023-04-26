@@ -163,7 +163,7 @@ class BLNETWeb(object):
         # send the request to change the node
         try:
             r = requests.get(
-                self.ip + "/can.htm?blaA=" + str(node),
+                self.ip + "/can.htm?blaB=" + str(node),
                 headers=self.cookie_header(),
                 timeout=self._timeout)
         except requests.exceptions.RequestException:
