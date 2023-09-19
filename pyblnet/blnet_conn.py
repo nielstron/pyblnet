@@ -11,10 +11,10 @@ https://github.com/berwinter/uvr1611/blob/master/lib/backend/blnet-connection.in
 from builtins import str, int
 from socket import socket, getaddrinfo, SOCK_STREAM, IPPROTO_TCP
 import struct
-from .blnet_parser import BLNETParser
 from time import sleep
 from datetime import datetime
-import math
+
+from .blnet_parser import BLNETParser
 
 # Constants for the UVR Communication
 CAN_MODE = b"\xDC"

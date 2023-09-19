@@ -10,8 +10,8 @@ as possible.
 
 @author: Niels
 """
-from pyblnet.blnet_web import BLNETWeb
-from pyblnet.blnet_conn import BLNETDirect
+from .blnet_web import BLNETWeb
+from .blnet_conn import BLNETDirect
 
 from urllib.parse import urlparse
 

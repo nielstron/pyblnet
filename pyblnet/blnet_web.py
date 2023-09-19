@@ -14,7 +14,6 @@ from htmldom import htmldom
 import html
 import re
 from builtins import int
-import pickle
 
 
 def test_blnet(ip, timeout=5, id=0):
