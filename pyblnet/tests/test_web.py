@@ -10,7 +10,7 @@ from .test_structure.blnet_mock_server import BLNETServer, BLNETRequestHandler, 
 import time
 
 # For the tests
-from pyblnet import BLNET, test_blnet, BLNETWeb
+from .. import BLNET, test_blnet, BLNETWeb
 from .web_raw.web_state import STATE, STATE_ANALOG, STATE_DIGITAL
 
 ADDRESS = "localhost"
