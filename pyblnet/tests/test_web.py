@@ -21,7 +21,7 @@ class OfflineTest(unittest.TestCase):
     url = ADDRESS
 
     def test_blnet(self):
-        """ Test finding the blnet """
+        """Test finding the blnet"""
         self.assertFalse(test_blnet(self.url, timeout=10))
 
     def test_blnet_web(self):
@@ -65,7 +65,7 @@ class BLNETWebTest(unittest.TestCase):
         self.server_control.start_server()
 
     def test_blnet(self):
-        """ Test finding the blnet """
+        """Test finding the blnet"""
         self.assertTrue(test_blnet(self.url, timeout=10))
         self.server.set_blocked()
         self.assertTrue(test_blnet(self.url, timeout=10))
@@ -85,7 +85,7 @@ class BLNETWebTest(unittest.TestCase):
             self.assertTrue(blnet.logged_in())
 
     def test_blnet_fetch(self):
-        """ Test fetching data in higher level class """
+        """Test fetching data in higher level class"""
         self.assertEqual(
             BLNET(
                 ADDRESS, password=PASSWORD, timeout=10, use_ta=False, web_port=self.port
@@ -94,7 +94,7 @@ class BLNETWebTest(unittest.TestCase):
         )
 
     def test_blnet_fetch_fine_grained(self):
-        """ Test fetching data in higher level class """
+        """Test fetching data in higher level class"""
         fetched = STATE
 
         def scratch_tuple(type, id, ret):
@@ -125,7 +125,7 @@ class BLNETWebTest(unittest.TestCase):
         )
 
     def test_blnet_turn(self):
-        """ Test higher level turn methods """
+        """Test higher level turn methods"""
         blnet = BLNET(
             ADDRESS, password=PASSWORD, timeout=10, use_ta=False, web_port=self.port
         )
@@ -139,7 +139,7 @@ class BLNETWebTest(unittest.TestCase):
         self.assertEqual(self.server.get_node("1"), "1")
 
     def test_blnet_fetch_error(self):
-        """ Test fetching data in higher level class with missing password (or otherwise denied access to the data) """
+        """Test fetching data in higher level class with missing password (or otherwise denied access to the data)"""
         self.assertEqual(
             BLNET(
                 ADDRESS, password=None, timeout=10, use_ta=False, web_port=self.port
@@ -148,17 +148,17 @@ class BLNETWebTest(unittest.TestCase):
         )
 
     def test_blnet_web_analog(self):
-        """ Test reading analog values """
+        """Test reading analog values"""
         with BLNETWeb(self.url, password=PASSWORD, timeout=10) as blnet:
             self.assertEqual(blnet.read_analog_values(), STATE_ANALOG)
 
     def test_blnet_web_digital(self):
-        """ Test reading digital values"""
+        """Test reading digital values"""
         with BLNETWeb(self.url, password=PASSWORD, timeout=10) as blnet:
             self.assertEqual(blnet.read_digital_values(), STATE_DIGITAL)
 
     def test_blnet_web_set_digital(self):
-        """ Test setting digital values """
+        """Test setting digital values"""
         with BLNETWeb(self.url, password=PASSWORD, timeout=10) as blnet:
             blnet.set_digital_value(10, "2")
             self.assertEqual(self.server.get_node("A"), "2")
@@ -188,7 +188,7 @@ class BLNETWebTest(unittest.TestCase):
                 pass
 
     def test_blnet_web_log_out(self):
-        """ Test setting digital values """
+        """Test setting digital values"""
         blnet = BLNETWeb(self.url, password=PASSWORD, timeout=10)
         self.assertFalse(blnet.logged_in())
         with blnet as blnet:
