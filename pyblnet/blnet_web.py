@@ -241,6 +241,8 @@ class BLNETWeb(object):
             return None
         # get the element containing the interesting information
         dom = dom.find("div.c")[1]
+        if dom is None:
+            return None
 
         # filter out the text
         data_raw = dom.text()
