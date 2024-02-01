@@ -1,6 +1,7 @@
 import os
 import urllib.parse
 from http.server import SimpleHTTPRequestHandler, HTTPServer
+
 try:
     from http import HTTPStatus
 except ImportError:
@@ -10,25 +11,46 @@ import re
 import posixpath
 from pathlib import Path
 
-SERVER_DIR = Path(__file__).parent or Path('.')
+SERVER_DIR = Path(__file__).parent or Path(".")
+PASSWORD = "0123"
+
+COOKIE_RANGE = (0xAAAA, 0xFFFF)
+COOKIE_NUM = COOKIE_RANGE[1] - COOKIE_RANGE[0]
+LOGIN_COOKIES = [hex(i) for i in range(*COOKIE_RANGE)]
 
 
 class BLNETServer(HTTPServer):
 
+    current_log_in_cookie = 0
+
     # Currently allowed login cookie
     # or none if no one logged in
-    logged_in = True
+    logged_in = None
     # no login necessary
     password = None
     # access to digital nodes
     nodes = {}
+    # Enable option to block server
+    # (sends access denied all the time, for whatever reason)
+    blocked = False
 
     def set_password(self, password):
         self.password = password
         self.logged_in = None
 
-    def set_logged_in(self, cookie):
-        self.logged_in = cookie
+    def log_in(self):
+        if self.logged_in is not None:
+            return False
+        self.logged_in = LOGIN_COOKIES[self.current_log_in_cookie]
+        self.current_log_in_cookie += 1
+        self.current_log_in_cookie %= COOKIE_NUM
+        return self.logged_in
+
+    def log_out(self):
+        self.logged_in = None
+
+    def is_logged_in(self, cookie):
+        return cookie is not None and self.logged_in == cookie
 
     def set_node(self, id, value):
         self.nodes[id] = value
@@ -36,41 +58,60 @@ class BLNETServer(HTTPServer):
     def get_node(self, id):
         return self.nodes.get(id)
 
+    def set_blocked(self):
+        self.blocked = True
+
+    def unset_blocked(self):
+        self.blocked = False
+
 
 class BLNETRequestHandler(SimpleHTTPRequestHandler):
+
+    # uncomment on higher python versions for better debugging
+    # server: BLNETServer
 
     def do_GET(self):
         """
         Handle get request, but check for errors in protocol
         :return:
         """
+        if self.server.blocked:
+            self.send_error(403, "Access denied because server is blocked")
+            return
         path = self.translate_path(self.path)
+        if (
+            self.server.is_logged_in(self.headers.get("cookie"))
+            and "?blL=1" in self.requestline
+        ):
+            self.server.log_out()
         # Only access that is allowed without login is main.html
         if (
             not Path(path) == SERVER_DIR
-            and not Path(path) == SERVER_DIR.joinpath('main.htm')
-            and not Path(path) == SERVER_DIR.joinpath('main.html')
+            and not Path(path) == SERVER_DIR.joinpath("main.htm")
+            and not Path(path) == SERVER_DIR.joinpath("main.html")
         ):
-            if not self.server.logged_in:
+            if not self.server.is_logged_in(self.headers.get("cookie")):
                 self.send_error(403, "Not logged in, access denied")
                 return
             # Parse node sets
-            node_reg = re.compile(r'[?&]blw91A1200(?P<node>[0-9a-fA-F])=(?P<value>[1-3])')
+            node_reg = re.compile(
+                r"[?&]blw91A1200(?P<node>[0-9a-fA-F])=(?P<value>[1-3])"
+            )
             for match in node_reg.finditer(self.path):
-                self.server.set_node(
-                    match.group('node'),
-                    match.group('value')
-                )
+                self.server.set_node(match.group("node"), match.group("value"))
 
         # print(path)
         super().do_GET()
 
     def do_POST(self):
+        if self.server.blocked:
+            # apparently login may still may possible, access may be denied anyway
+            pass
         # Result of self.rfile.read() if correct POST request:
         # b'blu=1&blp=0123&bll=Login'
-        perfect = b'blu=1&blp=0123&bll=Login'
+        perfect = b"blu=1&blp=0123&bll=Login"
         request_raw = self.rfile.read(len(perfect))
-        request_string = request_raw.decode(encoding='utf-8')
+        request_string = request_raw.decode(encoding="utf-8")
         request_data = request_string.split("&")
 
         blu = False
@@ -79,30 +120,45 @@ class BLNETRequestHandler(SimpleHTTPRequestHandler):
         for query in request_data:
             if query.startswith("blu"):
                 if query.split("=")[1] != "1":
-                    self.send_error(403, "Wrong user set: expected blu=1, got {}".format(query))
+                    self.send_error(
+                        403, "Wrong user set: expected blu=1, got {}".format(query)
+                    )
                     return
                 blu = True
             elif query.startswith("blp"):
                 if query.split("=")[1] != self.server.password:
-                    self.send_error(403, "Wrong password: expected blp={}, got {}".format(self.server.password, query))
+                    self.send_error(
+                        403,
+                        "Wrong password: expected blp={}, got {}".format(
+                            self.server.password, query
+                        ),
+                    )
                     return
                 blp = True
             elif query.startswith("bll"):
                 if query.split("=")[1] != "Login":
-                    self.send_error(403, "Wrong bll spec, expected bll=Login, got {}".format(request_string))
+                    self.send_error(
+                        403,
+                        "Wrong bll spec, expected bll=Login, got {}".format(
+                            request_string
+                        ),
+                    )
                     return
                 bll = True
         if not (blu and blp and bll):
             self.send_error(403, "Missing query param in {}".format(request_string))
             return
         # Check for content type
-        if not self.headers.get('Content-Type') == 'application/x-www-form-urlencoded':
+        if not self.headers.get("Content-Type") == "application/x-www-form-urlencoded":
             self.send_error(403, "Wrong content-type")
             return
         # All checks passed? set Set-Cookie header and do_GET
         # random cookie - do not hardcode
-        self.server.set_logged_in('C1A3')
-        self.headers.add_header('Cookie', 'C1A3')
+        cookie = self.server.log_in()
+        if not cookie:
+            self.send_error(403, "Previous user did not log out")
+            return
+        self.headers.add_header("Cookie", cookie)
         self.do_GET()
 
     def translate_path(self, path):
@@ -115,16 +171,16 @@ class BLNETRequestHandler(SimpleHTTPRequestHandler):
         only slightly changed method of the standard library
         """
         # abandon query parameters
-        path = path.split('?',1)[0]
-        path = path.split('#',1)[0]
+        path = path.split("?", 1)[0]
+        path = path.split("#", 1)[0]
         # Don't forget explicit trailing slash when normalizing. Issue17324
-        trailing_slash = path.rstrip().endswith('/')
+        trailing_slash = path.rstrip().endswith("/")
         try:
-            path = urllib.parse.unquote(path, errors='surrogatepass')
+            path = urllib.parse.unquote(path, errors="surrogatepass")
         except UnicodeDecodeError:
             path = urllib.parse.unquote(path)
         path = posixpath.normpath(path)
-        words = path.split('/')
+        words = path.split("/")
         words = filter(None, words)
         path = str(SERVER_DIR.absolute())
         for word in words:
@@ -133,7 +189,7 @@ class BLNETRequestHandler(SimpleHTTPRequestHandler):
                 continue
             path = os.path.join(path, word)
         if trailing_slash:
-            path += '/'
+            path += "/"
         return path
 
     def send_head(self):
@@ -152,11 +208,10 @@ class BLNETRequestHandler(SimpleHTTPRequestHandler):
         f = None
         if os.path.isdir(path):
             parts = urllib.parse.urlsplit(self.path)
-            if not parts.path.endswith('/'):
+            if not parts.path.endswith("/"):
                 # redirect browser - doing basically what apache does
                 self.send_response(HTTPStatus.MOVED_PERMANENTLY)
-                new_parts = (parts[0], parts[1], parts[2] + '/',
-                             parts[3], parts[4])
+                new_parts = (parts[0], parts[1], parts[2] + "/", parts[3], parts[4])
                 new_url = urllib.parse.urlunsplit(new_parts)
                 self.send_header("Location", new_url)
                 self.end_headers()
@@ -171,7 +226,7 @@ class BLNETRequestHandler(SimpleHTTPRequestHandler):
                 return self.list_directory(path)
         ctype = self.guess_type(path)
         try:
-            f = open(path, 'rb')
+            f = open(path, "rb")
         except OSError:
             self.send_error(HTTPStatus.NOT_FOUND, "File not found")
             return None
@@ -182,11 +237,8 @@ class BLNETRequestHandler(SimpleHTTPRequestHandler):
             self.send_header("Content-Length", str(fs[6]))
             self.send_header("Last-Modified", self.date_time_string(fs.st_mtime))
             # Addition: send cookie
-            if (
-                self.server.logged_in is not None
-                and self.server.logged_in == self.headers.get('Cookie')
-            ):
-                self.send_header('Set-Cookie', 'C1A3')
+            if self.server.is_logged_in(self.headers.get("Cookie")):
+                self.send_header("Set-Cookie", self.server.logged_in)
             self.end_headers()
             return f
         except:
@@ -203,24 +255,25 @@ class BLNETRequestHandler(SimpleHTTPRequestHandler):
         """
         self.log_error("code %d, message %s", code, message)
         self.send_response(code, message)
-        self.send_header('Connection', 'close')
+        self.send_header("Connection", "close")
 
         # Message body is omitted for cases described in:
         #  - RFC7230: 3.3. 1xx, 204(No Content), 304(Not Modified)
         #  - RFC7231: 6.3.6. 205(Reset Content)
         body = None
-        if (code >= 200 and
-                code not in (HTTPStatus.NO_CONTENT,
-                             HTTPStatus.RESET_CONTENT,
-                             HTTPStatus.NOT_MODIFIED)):
+        if code >= 200 and code not in (
+            HTTPStatus.NO_CONTENT,
+            HTTPStatus.RESET_CONTENT,
+            HTTPStatus.NOT_MODIFIED,
+        ):
             # HTML encode to prevent Cross Site Scripting attacks
             # (see bug #1100201)
             # Specialized error method for BLNET
-            with SERVER_DIR.joinpath(".error.html").open('rb') as file:
+            with SERVER_DIR.joinpath(".error.html").open("rb") as file:
                 body = file.read()
             self.send_header("Content-Type", self.error_content_type)
-            self.send_header('Content-Length', int(len(body)))
+            self.send_header("Content-Length", int(len(body)))
         self.end_headers()
 
-        if self.command != 'HEAD' and body:
+        if self.command != "HEAD" and body:
             self.wfile.write(body)

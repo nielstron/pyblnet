@@ -46,25 +46,33 @@ class BLNETParser:
         # (fetched from bootloader storage)
         if len(data) == 61:
             (_, seconds, minutes, hours, days, months, years) = struct.unpack(
-                '<55sBBBBBB', data)
-            self.date = datetime(2000 + years, months, days, hours, minutes,
-                                 seconds)
+                "<55sBBBBBB", data
+            )
+            self.date = datetime(2000 + years, months, days, hours, minutes, seconds)
 
         # Only parse preceding data
         data = data[:55]
         power = [0, 0]
         kWh = [0, 0]
         MWh = [0, 0]
-        (_, digital, speed, active, power[0], kWh[0], MWh[0], power[1], kWh[1],
-         MWh[1]) = struct.unpack('<32sH4sBLHHLHH', data)
+        (
+            _,
+            digital,
+            speed,
+            active,
+            power[0],
+            kWh[0],
+            MWh[0],
+            power[1],
+            kWh[1],
+            MWh[1],
+        ) = struct.unpack("<32sH4sBLHHLHH", data)
 
-        analog = struct.unpack(
-            '<{}{}'.format('H' * 16, 'x' * (len(data) - 32)), data)
+        analog = struct.unpack("<{}{}".format("H" * 16, "x" * (len(data) - 32)), data)
 
         self.analog = {}
         for channel in range(0, 16):
-            self.analog[channel + 1] = round(
-                self._convert_analog(analog[channel]), 3)
+            self.analog[channel + 1] = round(self._convert_analog(analog[channel]), 3)
 
         self.digital = {}
         for channel in range(0, 16):
@@ -72,19 +80,19 @@ class BLNETParser:
 
         self.speed = {}
         for channel in range(0, 4):
-            self.speed[channel + 1] = round(
-                self._convert_speed(speed[channel]), 3)
+            self.speed[channel + 1] = round(self._convert_speed(speed[channel]), 3)
 
         self.energy = {}
         for channel in range(0, 2):
             self.energy[channel + 1] = round(
-                self._convert_energy(MWh[channel], kWh[channel], active,
-                                     channel), 3)
+                self._convert_energy(MWh[channel], kWh[channel], active, channel), 3
+            )
 
         self.power = {}
         for channel in range(0, 2):
             self.power[channel + 1] = round(
-                self._convert_power(power[channel], active, channel), 3)
+                self._convert_power(power[channel], active, channel), 3
+            )
 
     def to_dict(self):
         """
@@ -150,16 +158,13 @@ class BLNETParser:
         @return its power
         """
         if active & position:
-            return self._calculate_value(value, 1 / 2560, INT32_MASK,
-                                         INT32_SIGN)
+            return self._calculate_value(value, 1 / 2560, INT32_MASK, INT32_SIGN)
         else:
             return None
 
-    def _calculate_value(self,
-                         value,
-                         multiplier=1,
-                         positive_mask=POSITIVE_VALUE_MASK,
-                         signbit=SIGN_BIT):
+    def _calculate_value(
+        self, value, multiplier=1, positive_mask=POSITIVE_VALUE_MASK, signbit=SIGN_BIT
+    ):
         result = value & positive_mask
         if value & signbit:
             result = -((result ^ positive_mask) + 1)
