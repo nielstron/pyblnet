@@ -80,19 +80,29 @@ class BLNETParser:
 
         self.speed = {}
         for channel in range(0, 4):
-            self.speed[channel + 1] = round(self._convert_speed(speed[channel]), 3)
+            speed = self._convert_speed(speed[channel])
+            if speed:
+                self.speed[channel + 1] = round(speed, 3)
+            else:
+                break
 
         self.energy = {}
         for channel in range(0, 2):
-            self.energy[channel + 1] = round(
-                self._convert_energy(MWh[channel], kWh[channel], active, channel), 3
-            )
+            energy = self._convert_energy(MWh[channel], kWh[channel], active, channel)
+            if energy:
+                self.energy[channel + 1] = round(energy, 3)
+            else:
+                break
 
         self.power = {}
         for channel in range(0, 2):
-            self.power[channel + 1] = round(
-                self._convert_power(power[channel], active, channel), 3
-            )
+            power = self._convert_power(power[channel], active, channel)
+            if power:
+                self.power[channel + 1] = round(
+                    self._convert_power(power[channel], active, channel), 3
+                )
+            else:
+                break
 
     def to_dict(self):
         """
