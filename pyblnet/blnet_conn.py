@@ -3,7 +3,7 @@
 """
 Created on 09.08.2018
 
-This is basically a python port of of a script by berwinter
+This is basically a python port of a script by berwinter
 https://github.com/berwinter/uvr1611/blob/master/lib/backend/blnet-connection.inc.php
 
 @author: Niels
