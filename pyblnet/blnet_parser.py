@@ -79,30 +79,18 @@ class BLNETParser:
             self.digital[channel + 1] = self._convert_digital(digital, channel)
 
         self.speed = {}
-        for channel in range(0, 4):
-            speed = self._convert_speed(speed[channel])
-            if speed:
-                self.speed[channel + 1] = round(speed, 3)
-            else:
-                break
+        for idx, value in enumerate(speed):
+            self.speed[idx + 1] = self._convert_speed(value)
 
         self.energy = {}
         for channel in range(0, 2):
             energy = self._convert_energy(MWh[channel], kWh[channel], active, channel)
-            if energy:
-                self.energy[channel + 1] = round(energy, 3)
-            else:
-                break
+            self.energy[channel + 1] = energy
 
         self.power = {}
-        for channel in range(0, 2):
-            power = self._convert_power(power[channel], active, channel)
-            if power:
-                self.power[channel + 1] = round(
-                    self._convert_power(power[channel], active, channel), 3
-                )
-            else:
-                break
+        for idx, value in enumerate(power):
+            power = self._convert_power(value, active, idx)
+            self.power[idx + 1] = power
 
     def to_dict(self):
         """
@@ -149,7 +137,7 @@ class BLNETParser:
         if value & SPEED_ACTIVE:
             return None
         else:
-            return value & SPEED_MASK
+            return round(value & SPEED_MASK, 3)
 
     def _convert_energy(self, mwh, kwh, active, position):
         """
@@ -158,7 +146,7 @@ class BLNETParser:
         """
         if active & position:
             kwh = self._calculate_value(kwh, 0.1, INT16_POSITIVE_MASK)
-            return mwh * 1000 + kwh
+            return round(mwh * 1000 + kwh, 3)
         else:
             return None
 
@@ -168,12 +156,14 @@ class BLNETParser:
         @return its power
         """
         if active & position:
-            return self._calculate_value(value, 1 / 2560, INT32_MASK, INT32_SIGN)
+            value = self._calculate_value(value, 1 / 2560, INT32_MASK, INT32_SIGN)
+            value = round(value, 3)
+            return value
         else:
             return None
 
     def _calculate_value(
-        self, value, multiplier=1, positive_mask=POSITIVE_VALUE_MASK, signbit=SIGN_BIT
+        self, value, multiplier=1.0, positive_mask=POSITIVE_VALUE_MASK, signbit=SIGN_BIT
     ):
         result = value & positive_mask
         if value & signbit:
