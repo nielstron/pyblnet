@@ -1,0 +1,60 @@
+name: Python Package
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        if [[ ${{ matrix.python-version }} == 3.7 ]]; then
+          pip install -U importlib_metadata
+        fi
+        pip install coverage coveralls
+        pip install -e .
+    - name: Run tests
+      run: coverage run --source=pyblnet setup.py test
+    - name: Coverage report
+      run: |
+        coverage report
+        coveralls
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
+        COVERALLS_PARALLEL: true
+    - name: Publish to PyPI
+      if: github.ref == 'master' && github.event_name == 'push' && matrix.python-version == '3.10'
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_TOKEN }}
+        skip_existing: true
+
+
+  coveralls:
+      name: Indicate completion to coveralls.io
+      needs: build
+      runs-on: ubuntu-latest
+      container: python:3-slim
+      steps:
+      - name: Install coveralls
+        run: pip3 install --upgrade coveralls
+      - name: Finished
+        run: coveralls --finish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
