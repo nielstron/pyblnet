@@ -1,0 +1,42 @@
+name: Python Package
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.5, 3.6, 3.7, 3.8, 3.9, 3.10, 3.11]
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        if [[ ${{ matrix.python-version }} == 3.7 ]]; then
+          pip install -U importlib_metadata
+        fi
+        pip install coverage coveralls
+        pip install -e .
+    - name: Run tests
+      run: coverage run --source=pyblnet setup.py test
+    - name: Coverage report
+      run: |
+        coverage report
+        coveralls
+    - name: Publish to PyPI
+      if: github.event_name == 'push' && matrix.python-version == '3.10'
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_TOKEN }}
+        skip_existing: true
