@@ -25,10 +25,10 @@ jobs:
         if [[ ${{ matrix.python-version }} == 3.7 ]]; then
           pip install -U importlib_metadata
         fi
-        pip install coverage coveralls
+        pip install coverage coveralls pytest
         pip install -e .
     - name: Run tests
-      run: coverage run --source=pyblnet setup.py test
+      run: coverage run --source=pyblnet -m pytest
     - name: Coverage report
       run: |
         coverage report
