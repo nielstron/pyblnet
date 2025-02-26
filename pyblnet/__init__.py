@@ -4,13 +4,13 @@
 import warnings
 
 try:
-    from .blnet_web import BLNETWeb, test_blnet
+    from .blnet_web import BLNETWeb, blnet_test
     from .blnet_conn import BLNETDirect
     from .blnet import BLNET
 except ImportError as e:
     warnings.warn(ImportWarning(e))
 
-VERSION = (0, 9, 5)
+VERSION = (0, 9, 6)
 
 __version__ = ".".join([str(i) for i in VERSION])
 __author__ = "nielstron"

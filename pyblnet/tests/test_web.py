@@ -10,7 +10,7 @@ from .test_structure.blnet_mock_server import BLNETServer, BLNETRequestHandler, 
 import time
 
 # For the tests
-from .. import BLNET, test_blnet, BLNETWeb
+from .. import BLNET, blnet_test, BLNETWeb
 from .web_raw.web_state import STATE, STATE_ANALOG, STATE_DIGITAL
 
 ADDRESS = "localhost"
@@ -22,7 +22,7 @@ class OfflineTest(unittest.TestCase):
 
     def test_blnet(self):
         """Test finding the blnet"""
-        self.assertFalse(test_blnet(self.url, timeout=10))
+        self.assertFalse(blnet_test(self.url, timeout=10))
 
     def test_blnet_web(self):
         try:
@@ -66,9 +66,9 @@ class BLNETWebTest(unittest.TestCase):
 
     def test_blnet(self):
         """Test finding the blnet"""
-        self.assertTrue(test_blnet(self.url, timeout=10))
+        self.assertTrue(blnet_test(self.url, timeout=10))
         self.server.set_blocked()
-        self.assertTrue(test_blnet(self.url, timeout=10))
+        self.assertTrue(blnet_test(self.url, timeout=10))
 
     def test_blnet_web_log_in(self):
         """

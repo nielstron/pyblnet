@@ -15,8 +15,12 @@ import html
 import re
 from builtins import int
 
+ANALOG_INPUT_PATTERN = re.compile(r"(?P<id>\d+):&nbsp;(?P<name>.+)\n(&nbsp;){3,6}(?P<value>(-&nbsp;)?\d+,\d+) (?P<unit_of_measurement>.+?) &nbsp;&nbsp;PAR?")
+DIGITAL_INPUT_PATTERN = re.compile(r"(?P<id>\d+):&nbsp;(?P<name>.+)\n(&nbsp;){3,6}(?P<value>(-&nbsp;)?(AUS|EIN|ON|OFF){2,3})(&nbsp;){7}PAR?")
+SWITCH_VALUE_PATTERN = re.compile(r"(?P<id>\d+):&nbsp;(?P<name>.+)\n&nbsp;&nbsp;&nbsp;&nbsp;(?P<mode>(AUTO|HAND))/(?P<value>(AUS|EIN))")
 
-def test_blnet(ip, timeout=5, id=0):
+
+def blnet_test(ip, timeout=5, id=0):
     """
     Tests whether an BLNET answers under given ip
     Attributes:
@@ -63,7 +67,7 @@ class BLNETWeb(object):
         assert timeout is None or isinstance(timeout, int)
         if not ip.startswith("http://") and not ip.startswith("https://"):
             ip = "http://" + ip
-        if not test_blnet(ip):
+        if not blnet_test(ip):
             raise ValueError("No BLNET found under given address: {}".format(ip))
         self.ip = ip
         self.password = password
@@ -200,8 +204,7 @@ class BLNETWeb(object):
         data = list()
 
         # search for data by regular expression
-        match_iter = re.finditer(
-            r"(?P<id>\d+):&nbsp;(?P<name>.+)\n(&nbsp;){3,6}(?P<value>(-&nbsp;)?\d+,\d+) (?P<unit_of_measurement>.+?) &nbsp;&nbsp;PAR?",
+        match_iter = ANALOG_INPUT_PATTERN.finditer(
             data_raw,
         )
         # parse a dict of the match and save them all in a list
@@ -251,19 +254,20 @@ class BLNETWeb(object):
         data = list()
 
         # search for data by regular expression
-        match_iter = re.finditer(
-            r"(?P<id>\d+):&nbsp;(?P<name>.+)\n&nbsp;&nbsp;&nbsp;&nbsp;(?P<mode>(AUTO|HAND))/(?P<value>(AUS|EIN))",
-            data_raw,
-        )
+        match_iters = [
+            SWITCH_VALUE_PATTERN.finditer( data_raw, ),
+            DIGITAL_INPUT_PATTERN.finditer( data_raw, ),
+        ]
         # parse a dict of the match and save them all in a list
-        for match in match_iter:
-            match_dict = match.groupdict()
-            # convert html entities to unicode characters
-            for key, value in match_dict.items():
-                value = value.replace("&nbsp;", " ")
-                match_dict[key] = html.unescape(value)
-            # and append formatted dict
-            data.append(match_dict)
+        for match_iter in match_iters:
+            for match in match_iter:
+                match_dict = match.groupdict()
+                # convert html entities to unicode characters
+                for key, value in match_dict.items():
+                    value = value.replace("&nbsp;", " ")
+                    match_dict[key] = html.unescape(value)
+                # and append formatted dict
+                data.append(match_dict)
         return data
 
     def set_digital_value(self, digital_id, value):

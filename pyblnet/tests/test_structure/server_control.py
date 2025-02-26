@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import threading
+import logging
 
+_LOGGER = logging.getLogger(__name__)
 
 class Server:
     def __init__(self, server):
@@ -15,7 +17,7 @@ class Server:
 
     def _run_server(self):
 
-        print("Server started, serving on port {}".format(self.get_port()))
+        _LOGGER.debug("Server started, serving on port {}".format(self.get_port()))
 
         # notify about start
         self._server_started_event.set()
@@ -30,14 +32,14 @@ class Server:
         self._server_running = False
         self._server.server_close()
         # Here, server was stopped
-        print("Server stopped")
+        _LOGGER.debug("Server stopped")
 
     def stop_server(self):
         """
         Close server forcibly
         :return:
         """
-        print("Stopping server")
+        _LOGGER.debug("Stopping server")
         if self._server_running:
             self._server.shutdown()
 
