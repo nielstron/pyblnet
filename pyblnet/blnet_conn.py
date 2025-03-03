@@ -9,7 +9,7 @@ https://github.com/berwinter/uvr1611/blob/master/lib/backend/blnet-connection.in
 @author: Niels
 """
 from builtins import str, int
-from socket import socket, getaddrinfo, SOCK_STREAM, IPPROTO_TCP
+from socket import socket, getaddrinfo, SOCK_STREAM, IPPROTO_TCP, setdefaulttimeout
 import struct
 from time import sleep
 from datetime import datetime
@@ -41,12 +41,13 @@ class BLNETDirect(object):
     www.haus-terra.at/heizung/download/Schnittstelle/Schnittstelle_PC_Bootloader.pdf
     """
 
-    def __init__(self, address, port=40000, reset=False):
+    def __init__(self, address, port: int = 40000, reset: bool = False, timeout: float = 60):
         """
         Constructor
-        @param address: string, Address of the BL-Net device
-        @param port: integer, Port of the bl-net device for connection
-        @param reset: boolean, delete data on BL-Net after data receive
+        :param address: string, Address of the BL-Net device
+        :param port: integer, Port of the bl-net device for connection
+        :param reset: boolean, delete data on BL-Net after data receive
+        :param timeout: float, timeout in seconds for the connection
         """
         assert isinstance(address, str)
         assert isinstance(port, int)
@@ -58,6 +59,8 @@ class BLNETDirect(object):
         self._socket = None
         self._count = None
         self._check_mode()
+        if timeout:
+            setdefaulttimeout(timeout)
 
     def get_count(self):
         """
