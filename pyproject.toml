@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [ project ]
 name = "PyBLNET"
-version = "0.9.6"
+version = "0.10.0"
 description = "Automate wireless communication to UVR1611 via BL-NET"
 readme = "README.md"
 readme-content-type = "text/markdown"
