@@ -10,11 +10,5 @@ try:
 except ImportError as e:
     warnings.warn(ImportWarning(e))
 
-VERSION = (0, 9, 5)
+VERSION = (0, 9, 6)
 
-__version__ = ".".join([str(i) for i in VERSION])
-__author__ = "nielstron"
-__author_email__ = "n.muendler@web.de"
-__copyright__ = "Copyright (C) 2019 nielstron"
-__license__ = "MIT"
-__url__ = "https://github.com/nielstron/pyblnet"
