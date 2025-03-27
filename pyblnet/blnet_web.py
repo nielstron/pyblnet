@@ -16,7 +16,7 @@ import re
 from builtins import int
 
 
-def test_blnet(ip, timeout=5, id=0):
+def blnet_test(ip, timeout=5, id=0):
     """
     Tests whether an BLNET answers under given ip
     Attributes:
@@ -63,7 +63,7 @@ class BLNETWeb(object):
         assert timeout is None or isinstance(timeout, int)
         if not ip.startswith("http://") and not ip.startswith("https://"):
             ip = "http://" + ip
-        if not test_blnet(ip):
+        if not blnet_test(ip):
             raise ValueError("No BLNET found under given address: {}".format(ip))
         self.ip = ip
         self.password = password

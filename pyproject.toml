@@ -32,6 +32,11 @@ dependencies = [
     "requests",
 ]
 
+[project.optional-dependencies]
+test = [
+    "pytest",
+]
+
 [ project.urls ]
 "Homepage" = "https://github.com/nielstron/pyblnet/"
 

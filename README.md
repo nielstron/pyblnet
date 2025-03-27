@@ -22,12 +22,12 @@ Setting switches and reading their manual/auto state is only possible via the BL
 ### Usage
 
 ```python
-from pyblnet import test_blnet, BLNET, BLNETWeb, BLNETDirect
+from pyblnet import blnet_test, BLNET, BLNETWeb, BLNETDirect
 
 ip = '192.168.178.10'
 
 # Check if there is a blnet at given address
-test_blnet(ip) # -> True/False
+blnet_test(ip)  # -> True/False
 
 # Convenient high level interface
 blnet = BLNET(ip, password='pass', timeout=5)
@@ -39,8 +39,6 @@ blnet.turn_off(10)
 
 # Fetch data (contains all available data using enabled interfaces)
 print(blnet.fetch())
-
-
 
 # The low level modules are also available
 # note that the direct use of these modules is discouraged though
