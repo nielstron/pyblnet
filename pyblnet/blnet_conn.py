@@ -90,7 +90,7 @@ class BLNETDirect(object):
                     self._fetch_size = 4 + 61 * frame_count
                 elif self._mode == DL_MODE:
                     (_, device, start_address, end_address, checksum) = struct.unpack(
-                        "<5sB3s3sB"
+                        "<5sB3s3sB", data
                     )
                     self._address_inc = 64
                     self._can_frames = 1
@@ -98,7 +98,7 @@ class BLNETDirect(object):
                     self._fetch_size = 65
                 elif self._mode == DL2_MODE:
                     (_, device, start_address, end_address, checksum) = struct.unpack(
-                        "<5s2s3s3sB"
+                        "<5s2s3s3sB", data
                     )
                     self._address_inc = 128
                     self._can_frames = 1
