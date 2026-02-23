@@ -96,6 +96,11 @@ class BLNET(object):
                 for id, value in direct[domain].items():
                     if data[domain].get(id) is not None:
                         data[domain][id]["value"] = value
+                    elif not self.blnet_web:
+                        if value is None:
+                            continue
+                        data[domain][id] = {"value": value}
+
             for domain in ["speed", "energy", "power"]:
                 for id, value in direct[domain].items():
                     if value is None:
