@@ -9,7 +9,7 @@ https://github.com/berwinter/uvr1611/blob/master/lib/backend/blnet-connection.in
 @author: Niels
 """
 from builtins import str, int
-from socket import socket, getaddrinfo, SOCK_STREAM, IPPROTO_TCP, setdefaulttimeout
+from socket import socket, getaddrinfo, SOCK_STREAM, IPPROTO_TCP
 import struct
 from time import sleep
 from datetime import datetime
@@ -55,12 +55,12 @@ class BLNETDirect(object):
         self.address = address
         self.port = port
         self.reset = reset
+        # 0 would make the socket non-blocking, treat it like None (no timeout)
+        self._timeout = timeout or None
         self._mode = None
         self._socket = None
         self._count = None
         self._check_mode()
-        if timeout:
-            setdefaulttimeout(timeout)
 
     def get_count(self):
         """
@@ -167,6 +167,7 @@ class BLNETDirect(object):
             for (family, socktype, proto, _, sockaddr) in available:
                 try:
                     self._socket = socket(family, socktype, proto)
+                    self._socket.settimeout(self._timeout)
                     self._socket.connect(sockaddr)
                     break
                 except:
@@ -318,7 +319,7 @@ class BLNETDirect(object):
         self._connect()
         self.get_count()
         frames = {}
-        info = {"sleep": {}, "got": {}}
+        info = {"sleep": {}, "got": {}, "timeout": []}
 
         # for all frames
         for frame in range(0, self._can_frames):
@@ -342,9 +343,9 @@ class BLNETDirect(object):
                         info["got"][frame] = n
                         frames.update(self._split_latest(data, frame))
                         break
-            # TODO this looks suspicious
-            if n == max_retries - 1:
-                frames[frame] = "timeout"
+            else:
+                # BL-Net did not send data for this frame within max_retries
+                info["timeout"].append(frame)
             info["sleep"][frame] = sleeps
         self._end_read(True)
         if len(frames) > 0:
