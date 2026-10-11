@@ -43,6 +43,16 @@ class TestParser(unittest.TestCase):
         assert parsed_values['analog'][1] is None
         assert parsed_values['analog'][2] == 409.4
 
+    def test_parser_input_types(self):
+        # temperature, volume flow, radiation, digital, unused, room sensor, undocumented type 101
+        inputs = [0x2000, 0x3000, 0x4000, 0x1000, 0x0000, 0x7000, 0x5000] + [0x2000] * 9
+        data = struct.pack('<16H', *inputs) + bytes(55 - 32)
+        parsed_values = BLNETParser(data).to_dict()
+
+        expected_types = {1: 'temperature', 2: 'volume_flow', 3: 'radiation', 4: 'digital', 5: None, 6: 'temperature', 7: None}
+        expected_types.update({channel: 'temperature' for channel in range(8, 17)})
+        assert parsed_values['analog_types'] == expected_types
+
     def test_parser_heat_meter_1_active(self):
         # Latest data of a real UVR1611 in DL mode (header and checksum stripped),
         # only heat meter 1 is active (active byte = 0x01)

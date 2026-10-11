@@ -12,8 +12,15 @@ as possible.
 """
 from .blnet_web import BLNETWeb
 from .blnet_conn import BLNETDirect
+from .blnet_parser import ANALOG_UNITS
 
 from urllib.parse import urlparse
+
+
+# Units of the values only available via BLNETDirect, speed is a level 0-30
+UNITS = {"speed": None, "energy": "kWh", "power": "kW"}
+# Analog input type for the units shown by the web interface
+WEB_UNIT_TYPES = {unit: input_type for input_type, unit in ANALOG_UNITS.items() if unit is not None}
 
 
 class BLNET(object):
@@ -88,6 +95,8 @@ class BLNET(object):
                     blnet_session.set_node(node)
                 data["analog"] = self._convert_web(blnet_session.read_analog_values())
                 data["digital"] = self._convert_web(blnet_session.read_digital_values())
+            for entry in data["analog"].values():
+                entry["type"] = WEB_UNIT_TYPES.get(entry.get("unit_of_measurement"))
         if self.blnet_direct:
             direct = self.blnet_direct.get_latest(self.max_retries)[0]
             # Override values for analog and digital as values are
@@ -100,12 +109,16 @@ class BLNET(object):
                         if value is None:
                             continue
                         data[domain][id] = {"value": value}
+                        if domain == "analog":
+                            input_type = direct["analog_types"][id]
+                            data[domain][id]["type"] = input_type
+                            data[domain][id]["unit_of_measurement"] = ANALOG_UNITS.get(input_type)
 
             for domain in ["speed", "energy", "power"]:
                 for id, value in direct[domain].items():
                     if value is None:
                         continue
-                    data[domain][id] = {"value": value}
+                    data[domain][id] = {"value": value, "unit_of_measurement": UNITS[domain]}
         return data
 
     def turn_on(self, digital_id, can_node=None):

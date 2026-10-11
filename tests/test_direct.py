@@ -46,20 +46,29 @@ class BLNETDirectOnlyTest(unittest.TestCase):
 
     def test_fetch(self):
         data = self.blnet().fetch()
-        self.assertEqual(data["analog"][6], {"value": 53.9})
+        self.assertEqual(
+            data["analog"][6],
+            {"value": 53.9, "type": "temperature", "unit_of_measurement": "°C"},
+        )
+        self.assertEqual(
+            data["analog"][16],
+            {"value": 0, "type": "volume_flow", "unit_of_measurement": "l/h"},
+        )
         self.assertEqual(data["digital"][1], {"value": 1})
-        self.assertEqual(data["speed"][1], {"value": 24})
-        self.assertEqual(data["energy"], {1: {"value": 362847.4}})
+        # speed level 0-30, no unit
+        self.assertEqual(data["speed"][1], {"value": 24, "unit_of_measurement": None})
+        self.assertEqual(data["energy"], {1: {"value": 362847.4, "unit_of_measurement": "kWh"}})
+        self.assertEqual(data["power"], {1: {"value": 0.0, "unit_of_measurement": "kW"}})
 
     def test_get_value_by_id(self):
         value, entry, _ = self.blnet().get_analog_value(id=6)
         self.assertEqual(value, 53.9)
-        self.assertEqual(entry, {"value": 53.9})
+        self.assertEqual(entry["value"], 53.9)
 
     def test_fetch_succeeds_on_last_retry(self):
         self.server.latest_responses = [WAIT_RESPONSE, WAIT_RESPONSE, DL_LATEST_RESPONSE]
         data = self.blnet(max_retries=3).fetch()
-        self.assertEqual(data["analog"][6], {"value": 53.9})
+        self.assertEqual(data["analog"][6]["value"], 53.9)
 
     def test_fetch_reads_replies_split_into_segments(self):
         self.server.split_latest = True
@@ -112,7 +121,7 @@ class BLNETDirectOnlyTest(unittest.TestCase):
         # BL-NET answers again, but the old connection is gone
         self.server.silent = False
         self.server.drop_connections()
-        self.assertEqual(blnet.fetch()["analog"][6], {"value": 53.9})
+        self.assertEqual(blnet.fetch()["analog"][6]["value"], 53.9)
 
     def test_fetch_raises_connection_error_when_blnet_hangs_up(self):
         blnet = self.blnet(timeout=1)
@@ -126,7 +135,7 @@ class BLNETDirectOnlyTest(unittest.TestCase):
         with self.assertRaises(ConnectionError):
             blnet.fetch()
         self.server.close_on = None
-        self.assertEqual(blnet.fetch()["analog"][6], {"value": 53.9})
+        self.assertEqual(blnet.fetch()["analog"][6]["value"], 53.9)
 
     def test_constructor_closes_socket_on_timeout(self):
         self.server.silent = True
@@ -152,7 +161,7 @@ class BLNETDirectOnlyTest(unittest.TestCase):
         # Real BL-NETs answer "no data" for up to a few seconds after a read
         blnet = self.blnet(max_retries=3)
         self.server.no_data_until = time.monotonic() + 1
-        self.assertEqual(blnet.fetch()["analog"][6], {"value": 53.9})
+        self.assertEqual(blnet.fetch()["analog"][6]["value"], 53.9)
 
     def test_fetch_raises_when_blnet_keeps_waiting(self):
         self.server.latest_responses = [WAIT_RESPONSE]

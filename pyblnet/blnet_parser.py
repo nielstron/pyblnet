@@ -36,6 +36,22 @@ TEMP_NO_SENSOR = TYPE_TEMP | POSITIVE_VALUE_MASK
 INT32_MASK = 0xFFFFFFFF
 INT32_SIGN = 0x80000000
 
+# Names of the analog input types, unused and undocumented types have none
+ANALOG_TYPES = {
+    TYPE_DIGITAL: "digital",
+    TYPE_TEMP: "temperature",
+    TYPE_VOLUME: "volume_flow",
+    TYPE_RADIATION: "radiation",
+    TYPE_RAS: "temperature",
+}
+# Units of the analog input types, as the web interface shows them
+ANALOG_UNITS = {
+    "digital": None,
+    "temperature": "°C",
+    "volume_flow": "l/h",
+    "radiation": "W/m²",
+}
+
 
 class BLNETParser:
     def __init__(self, data):
@@ -73,7 +89,9 @@ class BLNETParser:
         analog = struct.unpack("<{}{}".format("H" * 16, "x" * (len(data) - 32)), data)
 
         self.analog = {}
+        self.analog_types = {}
         for channel in range(0, 16):
+            self.analog_types[channel + 1] = ANALOG_TYPES.get(analog[channel] & TYPE_MASK)
             value = self._convert_analog(analog[channel])
             self.analog[channel + 1] = None if value is None else round(value, 3)
 
