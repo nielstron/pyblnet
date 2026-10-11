@@ -167,8 +167,11 @@ class BLNET(object):
         if cached is None:
             cached = self.fetch()
         for key, v in cached[type].items():
-            if str(v["name"]) == str(name) or str(v["id"]) == str(id):
-                val = v[ret]
+            # values fetched only via blnet_direct have no name
+            if (name is not None and str(v.get("name")) == str(name)) or (
+                id is not None and str(key) == str(id)
+            ):
+                val = v.get(ret)
                 dic = v
 
         return val, dic, cached
