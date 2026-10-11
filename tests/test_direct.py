@@ -133,6 +133,12 @@ class BLNETDirectOnlyTest(unittest.TestCase):
         with self.assertRaises(ConnectionError):
             blnet_direct._get_data(1)
 
+    def test_fetch_waits_while_blnet_has_no_new_data(self):
+        # Real BL-NETs answer "no data" for up to a few seconds after a read
+        blnet = self.blnet(max_retries=3)
+        self.server.no_data_until = time.monotonic() + 1
+        self.assertEqual(blnet.fetch()["analog"][6], {"value": 53.9})
+
     def test_fetch_raises_when_blnet_keeps_waiting(self):
         self.server.latest_responses = [WAIT_RESPONSE]
         with self.assertRaises(ConnectionError):

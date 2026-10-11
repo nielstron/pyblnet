@@ -1,4 +1,5 @@
 import socket
+import time
 from socketserver import BaseRequestHandler, ThreadingTCPServer
 
 # Responses recorded from a real BL-NET with one UVR1611 in DL mode
@@ -10,6 +11,8 @@ DL_LATEST_RESPONSE = bytes.fromhex(
 )
 # Asks the client to wait the given amount of seconds before trying again
 WAIT_RESPONSE = bytes.fromhex("ba00ba")
+# No new data available yet ("Synchronisation" in TA's interface spec)
+NO_DATA_RESPONSE = bytes.fromhex("ab")
 
 GET_MODE = 0x81
 GET_HEADER = 0xAA
@@ -31,6 +34,8 @@ class BLNETDirectServer(ThreadingTCPServer):
         self.silent = False
         # Close the connection when receiving this command
         self.close_on = None
+        # Answer GET_LATEST with NO_DATA_RESPONSE until this time.monotonic() value
+        self.no_data_until = None
         # Response to READ_DATA, by default one with a wrong checksum
         self.read_data_response = bytes.fromhex("0001")
         # Currently open client connections
@@ -74,6 +79,10 @@ class BLNETDirectRequestHandler(BaseRequestHandler):
             elif command == GET_LATEST:
                 # frame number
                 self.request.recv(1)
+                no_data_until = self.server.no_data_until
+                if no_data_until is not None and time.monotonic() < no_data_until:
+                    self.request.sendall(NO_DATA_RESPONSE)
+                    continue
                 responses = self.server.latest_responses
                 response = responses.pop(0) if len(responses) > 1 else responses[0]
                 self.request.sendall(response)

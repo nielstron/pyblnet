@@ -28,6 +28,9 @@ READ_DATA = 0xAC
 END_READ = b"\xAD"
 RESET_DATA = b"\xAF"
 WAIT_TIME = 0xBA
+# Seconds to wait when the BL-Net has no new data yet. Real devices answer
+# GET_LATEST with "no data" for up to about 5 seconds after a read.
+NO_DATA_WAIT = 2
 MAX_RETRYS = 10
 DATASET_SIZE = 61
 LATEST_SIZE = 56
@@ -362,7 +365,10 @@ class BLNETDirect(object):
             for n in range(0, max_retries):
                 data = self._query(command, self._actual_size)
 
-                if self._checksum(data):
+                if data == bytes([GET_LATEST]):
+                    # no new data available yet ("Synchronisation" in TA's spec)
+                    sleep(NO_DATA_WAIT)
+                elif self._checksum(data):
                     binary = struct.unpack("<{}".format("B" * len(data)), data)
 
                     if binary[0] == WAIT_TIME:
