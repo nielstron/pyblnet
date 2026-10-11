@@ -72,7 +72,8 @@ class BLNETParser:
 
         self.analog = {}
         for channel in range(0, 16):
-            self.analog[channel + 1] = round(self._convert_analog(analog[channel]), 3)
+            value = self._convert_analog(analog[channel])
+            self.analog[channel + 1] = None if value is None else round(value, 3)
 
         self.digital = {}
         for channel in range(0, 16):
@@ -107,7 +108,10 @@ class BLNETParser:
         """
 
         mask = value & TYPE_MASK
-        if mask == TYPE_TEMP:
+        if mask == TYPE_NONE:
+            # input is unused
+            return None
+        elif mask == TYPE_TEMP:
             return self._calculate_value(value, 0.1)
         elif mask == TYPE_VOLUME:
             return self._calculate_value(value, 4)
@@ -118,7 +122,8 @@ class BLNETParser:
                 return 0
         elif mask == TYPE_RAS:
             return self._calculate_value(value, 0.1, RAS_POSITIVE_MASK)
-        elif mask in [TYPE_RADIATION, TYPE_NONE] or True:
+        else:
+            # TYPE_RADIATION and types not covered by the interface spec
             return self._calculate_value(value)
 
     def _convert_digital(self, value, position):
@@ -144,7 +149,7 @@ class BLNETParser:
         Check if heat meter is activated on a given position
         @return its energy
         """
-        if active & position:
+        if active & (1 << position):
             kwh = self._calculate_value(kwh, 0.1, INT16_POSITIVE_MASK)
             return round(mwh * 1000 + kwh, 3)
         else:
@@ -155,7 +160,7 @@ class BLNETParser:
         checks if heat meter is activated at given position
         @return its power
         """
-        if active & position:
+        if active & (1 << position):
             value = self._calculate_value(value, 1 / 2560, INT32_MASK, INT32_SIGN)
             value = round(value, 3)
             return value
