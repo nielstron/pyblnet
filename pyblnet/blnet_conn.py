@@ -170,7 +170,8 @@ class BLNETDirect(object):
                     self._socket.settimeout(self._timeout)
                     self._socket.connect(sockaddr)
                     break
-                except:
+                except OSError:
+                    self._socket.close()
                     self._socket = None
             if self._socket is None:
                 raise ConnectionError("Could not connect to BLNET")

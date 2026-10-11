@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import gc
 import socket
 import threading
 import unittest
+import warnings
+from unittest import mock
 
 from pyblnet import BLNET, BLNETDirect
 from tests.test_structure.blnet_direct_mock_server import (
@@ -56,6 +59,23 @@ class BLNETDirectOnlyTest(unittest.TestCase):
     def test_timeout_does_not_change_global_socket_timeout(self):
         BLNETDirect(ADDRESS, self.port, timeout=7)
         self.assertIsNone(socket.getdefaulttimeout())
+
+    def test_failed_connection_attempt_closes_socket(self):
+        # Port that refuses connections: bind it, then free it again
+        with socket.socket() as s:
+            s.bind((ADDRESS, 0))
+            refused_port = s.getsockname()[1]
+        # The first address refuses the connection, the second one is the BL-NET
+        addresses = [
+            (socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP, "", ("127.0.0.1", port))
+            for port in (refused_port, self.port)
+        ]
+        with mock.patch("pyblnet.blnet_conn.getaddrinfo", return_value=addresses):
+            with warnings.catch_warnings(record=True) as caught:
+                warnings.simplefilter("always", ResourceWarning)
+                BLNETDirect(ADDRESS, self.port, timeout=7)
+                gc.collect()
+        self.assertEqual([w for w in caught if w.category is ResourceWarning], [])
 
     def test_fetch_raises_when_blnet_keeps_waiting(self):
         self.server.latest_responses = [WAIT_RESPONSE]
