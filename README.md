@@ -67,4 +67,4 @@ print(blnet._get_data(1))
 ```
 
 
-[1] https://www.haus-terra.at/heizung/download/Schnittstelle/Schnittstelle_PC_Bootloader.pdf
+[1] Technische Alternative, "Schnittstelle Winsol <> Bootloader" (2006), archived copy: http://web.archive.org/web/20160122124754/http://www.haus-terra.at:80/heizung/download/Schnittstelle/Schnittstelle_PC_Bootloader.pdf
