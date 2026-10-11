@@ -25,6 +25,8 @@ class BLNETDirectServer(ThreadingTCPServer):
         super().__init__(server_address, BLNETDirectRequestHandler)
         # Responses to GET_LATEST, the last one is repeated forever
         self.latest_responses = [DL_LATEST_RESPONSE]
+        # Accept connections but never answer
+        self.silent = False
 
 
 class BLNETDirectRequestHandler(BaseRequestHandler):
@@ -34,6 +36,8 @@ class BLNETDirectRequestHandler(BaseRequestHandler):
             if not command:
                 return
             command = command[0]
+            if self.server.silent:
+                continue
             if command == GET_MODE:
                 self.request.sendall(DL_MODE_RESPONSE)
             elif command == GET_HEADER:

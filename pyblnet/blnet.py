@@ -68,7 +68,7 @@ class BLNET(object):
             # especially not if not prefixed with http://
             # see https://docs.python.org/3/library/urllib.parse.html#urllib.parse.urlparse
             host = urlparse(address).hostname or address
-            self.blnet_direct = BLNETDirect(host, ta_port)
+            self.blnet_direct = BLNETDirect(host, ta_port, timeout=timeout)
 
     def fetch(self, node=None):
         """

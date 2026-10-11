@@ -4,6 +4,7 @@
 import gc
 import socket
 import threading
+import time
 import unittest
 import warnings
 from unittest import mock
@@ -76,6 +77,13 @@ class BLNETDirectOnlyTest(unittest.TestCase):
                 BLNETDirect(ADDRESS, self.port, timeout=7)
                 gc.collect()
         self.assertEqual([w for w in caught if w.category is ResourceWarning], [])
+
+    def test_timeout_is_used_for_direct_connection(self):
+        self.server.silent = True
+        start = time.monotonic()
+        with self.assertRaises(socket.timeout):
+            BLNET(ADDRESS, ta_port=self.port, timeout=1, use_web=False, use_ta=True)
+        self.assertLess(time.monotonic() - start, 5)
 
     def test_fetch_raises_when_blnet_keeps_waiting(self):
         self.server.latest_responses = [WAIT_RESPONSE]
