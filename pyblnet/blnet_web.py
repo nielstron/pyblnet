@@ -10,10 +10,74 @@ via it's HTTP-interface
 """
 
 import requests
-from htmldom import htmldom
 import html
 import re
 from builtins import int
+from html.parser import HTMLParser
+
+
+class _ElementTextParser(HTMLParser):
+    """
+    Collects the text of all elements with the given tag and class or id.
+    Entities like &nbsp; are kept as written and <br> becomes a newline,
+    which is what the regular expressions below expect.
+    """
+
+    def __init__(self, tag, cls=None, id=None):
+        super().__init__(convert_charrefs=False)
+        self.tag = tag
+        self.cls = cls
+        self.id = id
+        # text of each matching element, in document order
+        self.texts = []
+        # for each open element with self.tag: its index in self.texts,
+        # or None if it doesn't match. Matching elements can be nested.
+        self._open = []
+
+    def _matches(self, attrs):
+        attrs = dict(attrs)
+        return (self.cls is None or self.cls in (attrs.get("class") or "").split()) and (
+            self.id is None or attrs.get("id") == self.id
+        )
+
+    def handle_starttag(self, tag, attrs):
+        if tag == self.tag:
+            if self._matches(attrs):
+                self.texts.append("")
+                self._open.append(len(self.texts) - 1)
+            else:
+                self._open.append(None)
+        elif tag == "br":
+            self.handle_data("\n")
+
+    def handle_endtag(self, tag):
+        if tag == self.tag and self._open:
+            self._open.pop()
+
+    def handle_data(self, data):
+        for index in self._open:
+            if index is not None:
+                self.texts[index] += data
+
+    def handle_entityref(self, name):
+        self.handle_data(f"&{name};")
+
+    def handle_charref(self, name):
+        self.handle_data(f"&#{name};")
+
+
+def _element_texts(page, tag, cls=None, id=None):
+    """Texts of all elements in page with the given tag and class or id"""
+    parser = _ElementTextParser(tag, cls, id)
+    parser.feed(page)
+    parser.close()
+    return parser.texts
+
+
+def _element_text(page, tag, cls=None, id=None):
+    """Text of the first such element, empty if there is none"""
+    texts = _element_texts(page, tag, cls, id)
+    return texts[0] if texts else ""
 
 
 def blnet_test(ip, timeout=5, id=0):
@@ -28,13 +92,11 @@ def blnet_test(ip, timeout=5, id=0):
         r = requests.get(ip, timeout=timeout)
     except requests.exceptions.RequestException:
         return False
-    # Parse  DOM object from HTMLCode
-    dom = htmldom.HtmlDom().createDom(r.text)
     # either a 'Zugriff verweigert' message is shown
-    if "BL-Net".lower() in dom.find("title").text().lower():
+    if "BL-Net".lower() in _element_text(r.text, "title").lower():
         return True
     # or (more often) the BL-NET Menü
-    if "BL-NET" in dom.find("div#head").text():
+    if "BL-NET" in _element_text(r.text, "div", id="head"):
         return True
     return False
 
@@ -183,18 +245,12 @@ class BLNETWeb(object):
             )
         except requests.exceptions.RequestException:
             return None
-        # Parse  DOM object from HTMLCode
-        dom = htmldom.HtmlDom().createDom(r.text)
-        # Check if we didn't fail in access
-        # if 'BL-Net Zugang verweigert' in dom.find('title').text():
-        #    return None
         # get the element containing the interesting information
-        dom = dom.find("div.c")[1]
+        texts = _element_texts(r.text, "div", cls="c")
         # in case of access denied or other errors, return None
-        if dom is None:
-            return dom
-        # filter out the text
-        data_raw = dom.text()
+        if len(texts) < 2:
+            return None
+        data_raw = texts[1]
 
         # collect data in an array
         data = list()
@@ -234,18 +290,14 @@ class BLNETWeb(object):
             )
         except requests.exceptions.RequestException:
             return None
-        # Parse  DOM object from HTMLCode
-        dom = htmldom.HtmlDom().createDom(r.text)
         # Check if we didn't fail in access
-        if "BL-Net Zugang verweigert" in dom.find("title").text():
+        if "BL-Net Zugang verweigert" in _element_text(r.text, "title"):
             return None
         # get the element containing the interesting information
-        dom = dom.find("div.c")[1]
-        if dom is None:
+        texts = _element_texts(r.text, "div", cls="c")
+        if len(texts) < 2:
             return None
-
-        # filter out the text
-        data_raw = dom.text()
+        data_raw = texts[1]
 
         # collect data in an array
         data = list()

@@ -28,7 +28,6 @@ classifiers = [
     "Programming Language :: Python :: 3.15"
 ]
 dependencies = [
-    "htmldom",
     "requests",
 ]
 
