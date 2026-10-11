@@ -1,3 +1,4 @@
+import socket
 from socketserver import BaseRequestHandler, ThreadingTCPServer
 
 # Responses recorded from a real BL-NET with one UVR1611 in DL mode
@@ -13,6 +14,7 @@ WAIT_RESPONSE = bytes.fromhex("ba00ba")
 GET_MODE = 0x81
 GET_HEADER = 0xAA
 GET_LATEST = 0xAB
+READ_DATA = 0xAC
 END_READ = 0xAD
 
 
@@ -27,15 +29,42 @@ class BLNETDirectServer(ThreadingTCPServer):
         self.latest_responses = [DL_LATEST_RESPONSE]
         # Accept connections but never answer
         self.silent = False
+        # Close the connection when receiving this command
+        self.close_on = None
+        # Response to READ_DATA, by default one with a wrong checksum
+        self.read_data_response = bytes.fromhex("0001")
+        # Currently open client connections
+        self.connections = set()
+
+    def drop_connections(self):
+        """Close all open client connections, like a BL-NET that restarts"""
+        for connection in list(self.connections):
+            try:
+                connection.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                # client closed it already (macOS raises ENOTCONN, Linux doesn't)
+                pass
 
 
 class BLNETDirectRequestHandler(BaseRequestHandler):
     def handle(self):
+        self.server.connections.add(self.request)
+        try:
+            self._handle_commands()
+        except OSError:
+            # connection was dropped
+            pass
+        finally:
+            self.server.connections.discard(self.request)
+
+    def _handle_commands(self):
         while True:
             command = self.request.recv(1)
             if not command:
                 return
             command = command[0]
+            if command == self.server.close_on:
+                return
             if self.server.silent:
                 continue
             if command == GET_MODE:
@@ -48,5 +77,9 @@ class BLNETDirectRequestHandler(BaseRequestHandler):
                 responses = self.server.latest_responses
                 response = responses.pop(0) if len(responses) > 1 else responses[0]
                 self.request.sendall(response)
+            elif command == READ_DATA:
+                # address, number of frames, checksum
+                self.request.recv(5)
+                self.request.sendall(self.server.read_data_response)
             elif command == END_READ:
                 self.request.sendall(bytes([END_READ]))

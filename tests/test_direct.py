@@ -13,6 +13,9 @@ from pyblnet import BLNET, BLNETDirect
 from tests.test_structure.blnet_direct_mock_server import (
     BLNETDirectServer,
     DL_LATEST_RESPONSE,
+    GET_HEADER,
+    GET_LATEST,
+    READ_DATA,
     WAIT_RESPONSE,
 )
 
@@ -31,10 +34,11 @@ class BLNETDirectOnlyTest(unittest.TestCase):
         self.server.shutdown()
         self.server.server_close()
 
-    def blnet(self, max_retries=5):
+    def blnet(self, max_retries=5, timeout=5):
         return BLNET(
             ADDRESS,
             ta_port=self.port,
+            timeout=timeout,
             use_web=False,
             use_ta=True,
             max_retries=max_retries,
@@ -84,6 +88,50 @@ class BLNETDirectOnlyTest(unittest.TestCase):
         with self.assertRaises(socket.timeout):
             BLNET(ADDRESS, ta_port=self.port, timeout=1, use_web=False, use_ta=True)
         self.assertLess(time.monotonic() - start, 5)
+
+    def test_fetch_recovers_after_timeout(self):
+        blnet = self.blnet(timeout=1)
+        self.server.silent = True
+        with self.assertRaises(socket.timeout):
+            blnet.fetch()
+        # BL-NET answers again, but the old connection is gone
+        self.server.silent = False
+        self.server.drop_connections()
+        self.assertEqual(blnet.fetch()["analog"][6], {"value": 53.9})
+
+    def test_fetch_raises_connection_error_when_blnet_hangs_up(self):
+        blnet = self.blnet(timeout=1)
+        self.server.close_on = GET_HEADER
+        with self.assertRaises(ConnectionError):
+            blnet.fetch()
+
+    def test_fetch_recovers_after_blnet_hung_up(self):
+        blnet = self.blnet(timeout=1)
+        self.server.close_on = GET_LATEST
+        with self.assertRaises(ConnectionError):
+            blnet.fetch()
+        self.server.close_on = None
+        self.assertEqual(blnet.fetch()["analog"][6], {"value": 53.9})
+
+    def test_constructor_closes_socket_on_timeout(self):
+        self.server.silent = True
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always", ResourceWarning)
+            with self.assertRaises(socket.timeout):
+                BLNETDirect(ADDRESS, self.port, timeout=1)
+            gc.collect()
+        self.assertEqual([w for w in caught if w.category is ResourceWarning], [])
+
+    def test_read_logged_data_raises_when_blnet_hangs_up(self):
+        blnet_direct = BLNETDirect(ADDRESS, self.port, timeout=1)
+        self.server.close_on = READ_DATA
+        with self.assertRaises(ConnectionError):
+            blnet_direct._get_data(1)
+
+    def test_read_logged_data_raises_on_invalid_reply(self):
+        blnet_direct = BLNETDirect(ADDRESS, self.port, timeout=1)
+        with self.assertRaises(ConnectionError):
+            blnet_direct._get_data(1)
 
     def test_fetch_raises_when_blnet_keeps_waiting(self):
         self.server.latest_responses = [WAIT_RESPONSE]
