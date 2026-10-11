@@ -30,6 +30,8 @@ TYPE_VOLUME = 0x3000
 TYPE_RADIATION = 0x4000
 TYPE_RAS = 0x7000
 RAS_POSITIVE_MASK = 0x01FF
+# Temperature input without sensor (or with a broken wire): all value bits set, 409.5 °C
+TEMP_NO_SENSOR = TYPE_TEMP | POSITIVE_VALUE_MASK
 # 32 bit
 INT32_MASK = 0xFFFFFFFF
 INT32_SIGN = 0x80000000
@@ -110,6 +112,8 @@ class BLNETParser:
         mask = value & TYPE_MASK
         if mask == TYPE_NONE:
             # input is unused
+            return None
+        elif value == TEMP_NO_SENSOR:
             return None
         elif mask == TYPE_TEMP:
             return self._calculate_value(value, 0.1)
