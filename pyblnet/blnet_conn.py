@@ -32,6 +32,8 @@ WAIT_TIME = 0xBA
 # GET_LATEST with "no data" for up to about 5 seconds after a read.
 NO_DATA_WAIT = 2
 MAX_RETRYS = 10
+# Length of a WAIT_TIME reply: 0xBA, seconds to wait, checksum
+WAIT_SIZE = 3
 DATASET_SIZE = 61
 LATEST_SIZE = 56
 
@@ -237,6 +239,38 @@ class BLNETDirect(object):
                 break
         return data
 
+    def _recv_exact(self, length):
+        """
+        Receive exactly length bytes
+        @throws ConnectionError BL-Net closed the connection
+        @return Binary: byte string
+        """
+        data = b""
+        while len(data) < length:
+            received = self._socket.recv(length - len(data))
+            if not received:
+                raise ConnectionError("BL-Net closed the connection")
+            data += received
+        return data
+
+    def _query_latest(self, command):
+        """
+        Send a GET_LATEST command and receive the complete reply.
+        The BL-Net may send a reply in several TCP segments, so the length
+        is derived from its first byte and the reply is read completely.
+        Reading only part of it would leave the rest in the socket and
+        shift every following reply by some bytes.
+        @return Binary: byte string, a "no data", "wait" or data reply
+        """
+        self._socket.sendall(command)
+        first = self._recv_exact(1)
+        if first[0] == GET_LATEST:
+            # no new data available yet
+            return first
+        if first[0] == WAIT_TIME:
+            return first + self._recv_exact(WAIT_SIZE - 1)
+        return first + self._recv_exact(self._actual_size - 1)
+
     def _start_read(self):
         """
         Start to read on the bootloader
@@ -363,7 +397,7 @@ class BLNETDirect(object):
             # try 4 times
             sleeps = []
             for n in range(0, max_retries):
-                data = self._query(command, self._actual_size)
+                data = self._query_latest(command)
 
                 if data == bytes([GET_LATEST]):
                     # no new data available yet ("Synchronisation" in TA's spec)
@@ -381,6 +415,11 @@ class BLNETDirect(object):
                         info["got"][frame] = n
                         frames.update(self._split_latest(data, frame))
                         break
+                else:
+                    # Unexpected bytes may still be on their way, reconnect
+                    # so that they can't end up in the next reply
+                    self._disconnect()
+                    self._connect()
             else:
                 # BL-Net did not send data for this frame within max_retries
                 info["timeout"].append(frame)

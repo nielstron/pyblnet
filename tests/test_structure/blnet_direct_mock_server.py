@@ -38,6 +38,9 @@ class BLNETDirectServer(ThreadingTCPServer):
         self.no_data_until = None
         # Response to READ_DATA, by default one with a wrong checksum
         self.read_data_response = bytes.fromhex("0001")
+        # Send the first byte of GET_LATEST replies in a TCP segment of its own,
+        # like real BL-NETs sometimes do
+        self.split_latest = False
         # Currently open client connections
         self.connections = set()
 
@@ -85,7 +88,12 @@ class BLNETDirectRequestHandler(BaseRequestHandler):
                     continue
                 responses = self.server.latest_responses
                 response = responses.pop(0) if len(responses) > 1 else responses[0]
-                self.request.sendall(response)
+                if self.server.split_latest and len(response) > 1:
+                    self.request.sendall(response[:1])
+                    time.sleep(0.05)
+                    self.request.sendall(response[1:])
+                else:
+                    self.request.sendall(response)
             elif command == READ_DATA:
                 # address, number of frames, checksum
                 self.request.recv(5)
