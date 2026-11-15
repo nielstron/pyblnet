@@ -74,6 +74,21 @@ class BLNETDirectOnlyTest(unittest.TestCase):
         data = self.blnet(max_retries=3).fetch()
         self.assertEqual(data["analog"][6]["value"], 53.9)
 
+    def test_fetch_reads_replies_split_into_segments(self):
+        self.server.split_latest = True
+        blnet = self.blnet()
+        for _ in range(3):
+            data = blnet.fetch()
+            self.assertEqual(data["analog"][6]["value"], 53.9)
+            self.assertEqual(data["energy"][1]["value"], 362847.4)
+
+    def test_fetch_reconnects_after_invalid_reply(self):
+        # a stray byte ahead of the reply must not shift the following replies
+        self.server.latest_responses = [b"\x00" + DL_LATEST_RESPONSE, DL_LATEST_RESPONSE]
+        data = self.blnet().fetch()
+        self.assertEqual(data["analog"][6]["value"], 53.9)
+        self.assertEqual(data["energy"][1]["value"], 362847.4)
+
     def test_timeout_does_not_change_global_socket_timeout(self):
         BLNETDirect(ADDRESS, self.port, timeout=7)
         self.assertIsNone(socket.getdefaulttimeout())
