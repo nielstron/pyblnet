@@ -9,5 +9,5 @@ try:
 except ImportError as e:
     warnings.warn(ImportWarning(e))
 
-VERSION = (0, 13, 0)
+VERSION = (0, 13, 1)
 

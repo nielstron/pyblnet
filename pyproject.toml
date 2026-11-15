@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "PyBLNET"
-version = "0.13.0"
+version = "0.13.1"
 description = "Automate wireless communication to UVR1611 via BL-NET"
 readme = "README.md"
 requires-python = ">=3.11"
