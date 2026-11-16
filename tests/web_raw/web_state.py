@@ -60,6 +60,8 @@ STATE = {
     "digital": {
         1: {"id": "1", "mode": "AUTO", "name": "Pumpe-Solar", "value": "AUS"},
         2: {"id": "2", "mode": "AUTO", "name": "Pumpe-Hzkr", "value": "EIN"},
+        3: {"id": "3", "mode": "AUTO", "name": "Misch.Hzkr auf", "value": "AUS"},
+        4: {"id": "4", "mode": "AUTO", "name": "Misch.Hzkr zu", "value": "AUS"},
         5: {"id": "5", "mode": "AUTO", "name": "Anf.Kessel", "value": "AUS"},
         6: {"id": "6", "mode": "HAND", "name": "Vent.Solar", "value": "AUS"},
         7: {"id": "7", "mode": "AUTO", "name": "P Kaminofen", "value": "EIN"},
@@ -125,6 +127,8 @@ STATE_ALTERNATIVE = {
     "digital": {
         1: {"id": "1", "name": "Pumpe-Solar", "mode": "AUTO", "value": "AUS"},
         2: {"id": "2", "name": "Pumpe-Hzkr", "mode": "AUTO", "value": "EIN"},
+        3: {"id": "3", "name": "Misch.Hzkr auf", "mode": "AUTO", "value": "AUS"},
+        4: {"id": "4", "name": "Misch.Hzkr zu", "mode": "AUTO", "value": "AUS"},
         5: {"id": "5", "name": "Anf.Kessel", "mode": "AUTO", "value": "AUS"},
         6: {"id": "6", "name": "Vent.Solar", "mode": "HAND", "value": "AUS"},
         7: {"id": "7", "name": "P Kaminofen", "mode": "AUTO", "value": "EIN"},
@@ -159,6 +163,8 @@ STATE_ANALOG_ALTERNATIVE = [
 STATE_DIGITAL = [
     {"id": "1", "mode": "AUTO", "name": "Pumpe-Solar", "value": "AUS"},
     {"id": "2", "mode": "AUTO", "name": "Pumpe-Hzkr", "value": "EIN"},
+    {"id": "3", "mode": "AUTO", "name": "Misch.Hzkr auf", "value": "AUS"},
+    {"id": "4", "mode": "AUTO", "name": "Misch.Hzkr zu", "value": "AUS"},
     {"id": "5", "mode": "AUTO", "name": "Anf.Kessel", "value": "AUS"},
     {"id": "6", "mode": "HAND", "name": "Vent.Solar", "value": "AUS"},
     {"id": "7", "mode": "AUTO", "name": "P Kaminofen", "value": "EIN"},

@@ -108,6 +108,22 @@ class BLNETWebPagesTest(unittest.TestCase):
         self.assertEqual(data["analog"][13]["value"], "1")
         self.assertEqual(data["analog"][1]["value"], 14.3)
 
+    def test_read_digital_values_with_mixer(self):
+        # outputs 3 and 4 open and close a mixer, 15 and 16 are analog outputs
+        with serve("580600.mixer.htm"):
+            values = self.web.read_digital_values()
+        self.assertEqual(
+            values,
+            [
+                {"id": "1", "name": "Ladep.WW.", "mode": "AUTO", "value": "AUS"},
+                {"id": "2", "name": "Pumpe-Hzkr", "mode": "HAND", "value": "AUS"},
+                {"id": "3", "name": "Misch.Hzkr auf", "mode": "AUTO", "value": "AUS"},
+                {"id": "4", "name": "Misch.Hzkr zu", "mode": "AUTO", "value": "AUS"},
+                {"id": "5", "name": "Anf.Brenner", "mode": "AUTO", "value": "AUS"},
+                {"id": "10", "name": "Notheizer", "mode": "HAND", "value": "AUS"},
+            ],
+        )
+
     def test_read_analog_values_access_denied(self):
         with serve(".error.html"):
             self.assertIsNone(self.web.read_analog_values())

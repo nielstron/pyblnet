@@ -25,6 +25,14 @@ INPUT_PATTERN = re.compile(
 )
 DIGITAL_INPUT_STATES = {"AUS": "0", "OFF": "0", "EIN": "1", "ON": "1"}
 
+# A mixer on the outputs page: its mode, then the state of the opening output
+# and of the closing output, which has the next id
+MIXER_OUTPUT_PATTERN = re.compile(
+    r"(?P<id>\d+):&nbsp;(?P<name>.+)\n(&nbsp;)+(?P<mode>AUTO|HAND) .*PAR\?.*\n"
+    r"(&nbsp;)+auf:(&nbsp;)+(?P<open>AUS|EIN)\n"
+    r"(&nbsp;)*(?P<id_close>\d+):&nbsp;zu:(&nbsp;)+(?P<close>AUS|EIN)"
+)
+
 
 class _ElementTextParser(HTMLParser):
     """
@@ -326,6 +334,17 @@ class BLNETWeb(object):
                 match_dict[key] = html.unescape(value)
             # and append formatted dict
             data.append(match_dict)
+        # a mixer uses two outputs (open, close) with a common mode
+        for match in MIXER_OUTPUT_PATTERN.finditer(data_raw):
+            name = html.unescape(match["name"].replace("&nbsp;", " "))
+            for id, direction, value in [
+                (match["id"], "auf", match["open"]),
+                (match["id_close"], "zu", match["close"]),
+            ]:
+                data.append(
+                    {"id": id, "name": f"{name} {direction}", "mode": match["mode"], "value": value}
+                )
+        data.sort(key=lambda entry: int(entry["id"]))
         return data
 
     def set_digital_value(self, digital_id, value):
