@@ -105,7 +105,10 @@ class BLNET(object):
             for domain in ["analog", "digital"]:
                 for id, value in direct[domain].items():
                     if data[domain].get(id) is not None:
-                        data[domain][id]["value"] = value
+                        # Keep the web value if the direct one is missing: a
+                        # UVR1611 on CAN sends digital inputs as unused inputs
+                        if value is not None:
+                            data[domain][id]["value"] = value
                     elif not self.blnet_web:
                         if value is None:
                             continue
