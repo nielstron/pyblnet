@@ -1,6 +1,6 @@
 # PyBLNET - a very basic python BL-NET bridge
-![PyPI - Version](https://img.shields.io/pypi/v/pyblnet)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pyblnet)
+[![PyPI - Version](https://img.shields.io/pypi/v/pyblnet)](https://pypi.org/project/PyBLNET/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pyblnet)](https://pypi.org/project/PyBLNET/)
 [![Build status](https://github.com/nielstron/pyblnet/actions/workflows/build.yml/badge.svg)](https://github.com/nielstron/pyblnet/actions/workflows/build.yml)
 [![Coverage Status](https://coveralls.io/repos/github/nielstron/pyblnet/badge.svg?branch=master)](https://coveralls.io/github/nielstron/pyblnet?branch=master)
 
