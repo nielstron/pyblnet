@@ -27,7 +27,8 @@ TYPE_NONE = 0x0000
 TYPE_DIGITAL = 0x1000
 TYPE_TEMP = 0x2000
 TYPE_VOLUME = 0x3000
-TYPE_RADIATION = 0x4000
+# V110 TTTT TTTT TTTT in TA's interface spec, in W/m²
+TYPE_RADIATION = 0x6000
 TYPE_RAS = 0x7000
 RAS_POSITIVE_MASK = 0x01FF
 # Temperature input without sensor (or with a broken wire): all value bits set, 409.5 °C
