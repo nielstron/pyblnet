@@ -15,6 +15,16 @@ import re
 from builtins import int
 from html.parser import HTMLParser
 
+# An input on the inputs page: a measured value with unit, or the state of a
+# digital input. The value of a digital input is "1" (on) or "0" (off), like
+# the direct connection reports it.
+INPUT_PATTERN = re.compile(
+    r"(?P<id>\d+):&nbsp;(?P<name>.+)\n(&nbsp;){3,6}"
+    r"(?:(?P<value>(-&nbsp;)?\d+,\d+) (?P<unit_of_measurement>.+?) &nbsp;&nbsp;"
+    r"|(?P<state>AUS|EIN|OFF|ON)(&nbsp;)+)PAR?"
+)
+DIGITAL_INPUT_STATES = {"AUS": "0", "OFF": "0", "EIN": "1", "ON": "1"}
+
 
 class _ElementTextParser(HTMLParser):
     """
@@ -256,24 +266,24 @@ class BLNETWeb(object):
         data = list()
 
         # search for data by regular expression
-        match_iter = re.finditer(
-            r"(?P<id>\d+):&nbsp;(?P<name>.+)\n(&nbsp;){3,6}(?P<value>(-&nbsp;)?\d+,\d+) (?P<unit_of_measurement>.+?) &nbsp;&nbsp;PAR?",
-            data_raw,
-        )
-        # parse a dict of the match and save them all in a list
-        for match in match_iter:
-            match_dict = match.groupdict()
-            # convert html entities to unicode characters
-            for key, value in match_dict.items():
-                # replace &nbsp; by " " since it is not unescaped as expected
-                value = value.replace("&nbsp;", " ")
-                if key == "value":
-                    # for values
-                    # also replace decimal "," by "." and remove "&nbsp;" completely
-                    value = value.replace(",", ".").replace(" ", "")
-                match_dict[key] = html.unescape(value)
-            # and append formatted dict
-            data.append(match_dict)
+        for match in INPUT_PATTERN.finditer(data_raw):
+            # convert html entities to unicode characters,
+            # replace &nbsp; by " " since it is not unescaped as expected
+            entry = {
+                "id": match["id"],
+                "name": html.unescape(match["name"].replace("&nbsp;", " ")),
+            }
+            if match["state"] is not None:
+                entry["value"] = DIGITAL_INPUT_STATES[match["state"]]
+                entry["unit_of_measurement"] = None
+                entry["type"] = "digital"
+            else:
+                # replace decimal "," by "." and remove "&nbsp;" completely
+                entry["value"] = match["value"].replace("&nbsp;", "").replace(",", ".")
+                entry["unit_of_measurement"] = html.unescape(
+                    match["unit_of_measurement"].replace("&nbsp;", " ")
+                )
+            data.append(entry)
         return data
 
     def read_digital_values(self):
