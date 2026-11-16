@@ -3,6 +3,9 @@ on:
   push:
     tags:
       - "*.*.*"
+# creating the GitHub release needs write access, the default token is read-only
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
