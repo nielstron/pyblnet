@@ -1,10 +1,12 @@
 """Parsing of saved BL-NET web pages, independent of the mock HTTP server"""
 
+import struct
 import unittest
 from pathlib import Path
 from unittest import mock
 
 from pyblnet import BLNET, BLNETWeb, blnet_test
+from pyblnet.blnet_parser import BLNETParser
 
 PAGES = Path(__file__).parent / "test_structure"
 
@@ -89,6 +91,22 @@ class BLNETWebPagesTest(unittest.TestCase):
         self.assertEqual(data["analog"][8]["type"], "digital")
         self.assertEqual(data["analog"][8]["value"], "0")
         self.assertEqual(data["analog"][1]["type"], "temperature")
+
+    def test_fetch_keeps_web_value_of_digital_input_missing_in_direct_data(self):
+        # A UVR1611 on CAN sends digital inputs with type bits 000 (unused)
+        # and the state in bit 0, see the recorded dataset in pyblnet-async.
+        # The parser reports those as None, the web value has to stay.
+        inputs = [0x208F] + [0x2000] * 11 + [0x0001, 0x0001] + [0x2000] * 2
+        direct = BLNETParser(struct.pack("<16H", *inputs) + bytes(55 - 32)).to_dict()
+        with serve("main.htm"):
+            blnet = BLNET("blnet")
+        blnet.blnet_direct = mock.Mock(get_latest=mock.Mock(return_value={0: direct}))
+        with serve("580500.digital_inputs.htm"), mock.patch.object(
+            BLNETWeb, "read_digital_values", return_value=[]
+        ):
+            data = blnet.fetch()
+        self.assertEqual(data["analog"][13]["value"], "1")
+        self.assertEqual(data["analog"][1]["value"], 14.3)
 
     def test_read_analog_values_access_denied(self):
         with serve(".error.html"):
