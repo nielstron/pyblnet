@@ -96,7 +96,8 @@ class BLNET(object):
                 data["analog"] = self._convert_web(blnet_session.read_analog_values())
                 data["digital"] = self._convert_web(blnet_session.read_digital_values())
             for entry in data["analog"].values():
-                entry["type"] = WEB_UNIT_TYPES.get(entry.get("unit_of_measurement"))
+                # digital inputs come with their type, others by their unit
+                entry.setdefault("type", WEB_UNIT_TYPES.get(entry.get("unit_of_measurement")))
         if self.blnet_direct:
             direct = self.blnet_direct.get_latest(self.max_retries)[0]
             # Override values for analog and digital as values are

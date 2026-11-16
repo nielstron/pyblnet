@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from pyblnet import BLNETWeb, blnet_test
+from pyblnet import BLNET, BLNETWeb, blnet_test
 
 PAGES = Path(__file__).parent / "test_structure"
 
@@ -51,6 +51,44 @@ class BLNETWebPagesTest(unittest.TestCase):
                 {"id": "9", "name": "TZirku.RL", "value": "22.4", "unit_of_measurement": "°C"},
             ],
         )
+
+    def test_read_analog_values_with_digital_inputs(self):
+        # inputs 3, 8, 13 and 14 are digital inputs, shown as AUS/EIN
+        with serve("580500.digital_inputs.htm"):
+            values = self.web.read_analog_values()
+        digital = {"unit_of_measurement": None, "type": "digital"}
+        self.assertEqual(
+            values,
+            [
+                {"id": "1", "name": "T.Kollektor", "value": "14.2", "unit_of_measurement": "°C"},
+                {"id": "2", "name": "T.WW.Puffer", "value": "62.1", "unit_of_measurement": "°C"},
+                {"id": "3", "name": "-----", "value": "0", **digital},
+                {"id": "4", "name": "T.Solar-RL", "value": "38.1", "unit_of_measurement": "°C"},
+                {"id": "5", "name": "T.Zirku.RL", "value": "22.8", "unit_of_measurement": "°C"},
+                {"id": "6", "name": "T.Puffer.m", "value": "62.0", "unit_of_measurement": "°C"},
+                {"id": "7", "name": "T.Puffer.o", "value": "62.3", "unit_of_measurement": "°C"},
+                {"id": "8", "name": "Freigabe1", "value": "0", **digital},
+                {"id": "9", "name": "T.Kessel-VL", "value": "59.3", "unit_of_measurement": "°C"},
+                {"id": "10", "name": "T.Heizkr.VL1", "value": "27.0", "unit_of_measurement": "°C"},
+                {"id": "11", "name": "T.Heizkr.VL2", "value": "31.6", "unit_of_measurement": "°C"},
+                {"id": "12", "name": "Temp.Aussen", "value": "10.4", "unit_of_measurement": "°C"},
+                {"id": "13", "name": "Digitaleing.1", "value": "1", **digital},
+                {"id": "14", "name": "Digitaleing.2", "value": "1", **digital},
+                {"id": "15", "name": "Temp.Raum2", "value": "999.9", "unit_of_measurement": "°C"},
+                {"id": "16", "name": "Temp.Raum1", "value": "20.1", "unit_of_measurement": "°C"},
+            ],
+        )
+
+    def test_fetch_reports_digital_inputs_as_analog_inputs_of_type_digital(self):
+        with serve("main.htm"):
+            blnet = BLNET("blnet")
+        with serve("580500.digital_inputs.htm"), mock.patch.object(
+            BLNETWeb, "read_digital_values", return_value=[]
+        ):
+            data = blnet.fetch()
+        self.assertEqual(data["analog"][8]["type"], "digital")
+        self.assertEqual(data["analog"][8]["value"], "0")
+        self.assertEqual(data["analog"][1]["type"], "temperature")
 
     def test_read_analog_values_access_denied(self):
         with serve(".error.html"):
