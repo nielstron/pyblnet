@@ -29,9 +29,6 @@ The BL-NET has two interfaces, and pyblnet has a client for each:
 If both are enabled, values of the direct connection have priority.
 Setting switches and reading their manual/auto state is only possible via the web interface.
 
-All clients exist blocking in `pyblnet.sync` and async in `pyblnet.aio`, with the same methods.
-They are made with `create()`, which checks the BL-NET: it raises `ValueError` if no BL-NET answers
-at the web interface, and `ConnectionError` if the direct connection is not supported.
 
 ## Blocking usage
 
