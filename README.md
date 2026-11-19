@@ -87,13 +87,4 @@ async def main():
 asyncio.run(main())
 ```
 
-### How it is built
-
-Both the blocking and the async clients run the same protocol code, so they behave the same.
-`web_protocol.py` and `direct_protocol.py` contain the protocols without any I/O:
-the parsing, and the requests to log in, read and set values written as generators,
-which yield the requests or bytes they need and get the replies sent back ("sans-I/O").
-`BLNETWeb`, `BLNETDirect` and `BLNET` run them with `requests` and sockets,
-`pyblnet.aio` with `aiohttp` and asyncio streams (see `flow.py`).
-
 [1] Technische Alternative, "Schnittstelle Winsol <> Bootloader" (2006), archived copy: http://web.archive.org/web/20160122124754/http://www.haus-terra.at:80/heizung/download/Schnittstelle/Schnittstelle_PC_Bootloader.pdf
