@@ -24,7 +24,7 @@ from ..protocol.direct import (
 from ..protocol.flow import run_sync
 
 
-class BLNETDirect(object):
+class DirectClient(object):
     """
     A class for establishing a direct connection to the BLNET (rather than
     scraping the web interface)

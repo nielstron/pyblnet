@@ -4,9 +4,9 @@
 import warnings
 
 try:
-    from .sync.web import BLNETWeb, blnet_test
-    from .sync.direct import BLNETDirect
-    from .sync.blnet import BLNET
+    from .sync.web import WebClient, blnet_test
+    from .sync.direct import DirectClient
+    from .sync.client import Client
 except ImportError as e:
     warnings.warn(ImportWarning(e))
 

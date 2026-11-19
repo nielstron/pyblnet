@@ -17,8 +17,8 @@ from ..protocol.direct import (
 from ..protocol.flow import run_async
 
 
-class BLNETDirect:
-    """The direct connection (TA port) of the BL-NET, see pyblnet.BLNETDirect"""
+class DirectClient:
+    """The direct connection (TA port) of the BL-NET, see pyblnet.sync.DirectClient"""
 
     def __init__(self, address, port: int = 40000, reset: bool = False, timeout: float = 60):
         """Doesn't connect, use create() for that"""
@@ -36,9 +36,9 @@ class BLNETDirect:
     @classmethod
     async def create(cls, address, port: int = 40000, reset: bool = False, timeout: float = 60):
         """Raises ConnectionError if the BL-NET mode is not supported"""
-        blnet_direct = cls(address, port, reset, timeout)
-        await blnet_direct._run(blnet_direct.protocol.check_mode())
-        return blnet_direct
+        direct = cls(address, port, reset, timeout)
+        await direct._run(direct.protocol.check_mode())
+        return direct
 
     async def _run(self, flow):
         """

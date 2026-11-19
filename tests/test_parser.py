@@ -1,5 +1,5 @@
 import struct
-from pyblnet.protocol.parser import BLNETParser
+from pyblnet.protocol.parser import Parser
 import unittest
 
 
@@ -7,7 +7,7 @@ class TestParser(unittest.TestCase):
 
     def test_parser_ok(self):
         data = b'} \xb5"f"\x03"~!\x8e"\x16!\xe0 \xff \xf3 \xf8 \x00\x00=!\x01\x00\x00`\xe2!\x00\x00\x80\x00\x00\x00\x00,\x00\xa4(\x06\x00DhI\x82\x1d\x04Ce\xc0\x00'
-        parser = BLNETParser(data)
+        parser = Parser(data)
         parsed_values = parser.to_dict()
         expected_values = {
             'analog': {1: 12.5, 2: 69.3, 3: 61.4, 4: 51.5, 5: 38.2, 6: 65.4, 7: 27.8, 8: 22.4, 9: 25.5, 10: 24.3, 11: 24.8, 12: None, 13: 31.7, 14: None, 15: 0, 16: 48.2},
@@ -27,7 +27,7 @@ class TestParser(unittest.TestCase):
         # Input type bits 000 mean "Eingang unbenutzt", regardless of the other bits
         inputs = [0x0000, 0x0001, 0x8005] + [0x2000] * 13
         data = struct.pack('<16H', *inputs) + bytes(55 - 32)
-        parsed_values = BLNETParser(data).to_dict()
+        parsed_values = Parser(data).to_dict()
 
         assert parsed_values['analog'][1] is None
         assert parsed_values['analog'][2] is None
@@ -38,7 +38,7 @@ class TestParser(unittest.TestCase):
         # A temperature input without sensor reads all value bits set (409.5 °C)
         inputs = [0x2FFF, 0x2FFE] + [0x2000] * 14
         data = struct.pack('<16H', *inputs) + bytes(55 - 32)
-        parsed_values = BLNETParser(data).to_dict()
+        parsed_values = Parser(data).to_dict()
 
         assert parsed_values['analog'][1] is None
         assert parsed_values['analog'][2] == 409.4
@@ -48,7 +48,7 @@ class TestParser(unittest.TestCase):
         # undocumented types 101 and 100
         inputs = [0x2000, 0x3000, 0x6000, 0x1000, 0x0000, 0x7000, 0x5000, 0x4000] + [0x2000] * 8
         data = struct.pack('<16H', *inputs) + bytes(55 - 32)
-        parsed_values = BLNETParser(data).to_dict()
+        parsed_values = Parser(data).to_dict()
 
         expected_types = {1: 'temperature', 2: 'volume_flow', 3: 'radiation', 4: 'digital', 5: None, 6: 'temperature', 7: None, 8: None}
         expected_types.update({channel: 'temperature' for channel in range(9, 17)})
@@ -65,7 +65,7 @@ class TestParser(unittest.TestCase):
             '000000001a216a01'
             '0b010a3c0001000c'
         )
-        parsed_values = BLNETParser(data).to_dict()
+        parsed_values = Parser(data).to_dict()
 
         assert parsed_values['energy'] == {1: 362847.4, 2: None}
         assert parsed_values['power'] == {1: 0, 2: None}
@@ -73,4 +73,4 @@ class TestParser(unittest.TestCase):
     def test_parser_not_ok(self):
         data = b'broken} \xb5"f"\x03"~!\x8e"\x16!\xe0 \xff \xf3 \xf8 \x00\x00=!\x01\x00\x00`\xe2!\x00\x00\x80\x00\x00\x00\x00,\x00\xa4(\x06\x00DhI\x82\x1d\x04Ce\xc0\x00'
         with self.assertRaises(ValueError):
-            parser = BLNETParser(data)
+            parser = Parser(data)

@@ -8,7 +8,7 @@ import unittest
 
 import aiohttp
 
-from pyblnet import BLNET, aio
+from pyblnet import Client, aio
 from tests.test_structure.blnet_direct_mock_server import (
     BLNETDirectServer,
     DL_LATEST_RESPONSE,
@@ -53,10 +53,10 @@ class AsyncWebTest(unittest.IsolatedAsyncioTestCase):
         self.server_control.stop_server()
         self.assertFalse(await aio.blnet_test(self.session, self.url, timeout=2))
         with self.assertRaises(ValueError):
-            await aio.BLNETWeb.create(self.url, self.session)
+            await aio.WebClient.create(self.url, self.session)
 
     async def test_log_in(self):
-        blnet = await aio.BLNETWeb.create(
+        blnet = await aio.WebClient.create(
             "{}:{}".format(ADDRESS, self.port), self.session, password=PASSWORD, timeout=10
         )
         async with blnet:
@@ -64,7 +64,7 @@ class AsyncWebTest(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(await blnet.logged_in())
 
     async def test_read_values(self):
-        blnet = await aio.BLNETWeb.create(self.url, self.session, password=PASSWORD, timeout=10)
+        blnet = await aio.WebClient.create(self.url, self.session, password=PASSWORD, timeout=10)
         async with blnet:
             self.assertEqual(await blnet.read_analog_values(), STATE_ANALOG)
             self.assertEqual(await blnet.read_digital_values(), STATE_DIGITAL)
@@ -72,27 +72,27 @@ class AsyncWebTest(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(self.server.get_node("A"), "2")
 
     async def test_fetch_like_blocking_client(self):
-        blnet = await aio.BLNET.create(ADDRESS, session=self.session, **self.blnet_kwargs())
+        blnet = await aio.Client.create(ADDRESS, session=self.session, **self.blnet_kwargs())
         fetched = await blnet.fetch()
         self.assertEqual(fetched, STATE)
-        blocking = await asyncio.to_thread(lambda: BLNET(ADDRESS, **self.blnet_kwargs()).fetch())
+        blocking = await asyncio.to_thread(lambda: Client(ADDRESS, **self.blnet_kwargs()).fetch())
         self.assertEqual(fetched, blocking)
 
     async def test_fetch_access_denied_like_blocking_client(self):
-        blnet = await aio.BLNET.create(ADDRESS, session=self.session, **self.blnet_kwargs(None))
+        blnet = await aio.Client.create(ADDRESS, session=self.session, **self.blnet_kwargs(None))
         blocking = await asyncio.to_thread(
-            lambda: BLNET(ADDRESS, **self.blnet_kwargs(None)).fetch()
+            lambda: Client(ADDRESS, **self.blnet_kwargs(None)).fetch()
         )
         self.assertEqual(await blnet.fetch(), blocking)
 
     async def test_get_value(self):
-        blnet = await aio.BLNET.create(ADDRESS, session=self.session, **self.blnet_kwargs())
+        blnet = await aio.Client.create(ADDRESS, session=self.session, **self.blnet_kwargs())
         value, entry, _ = await blnet.get_value(name="TSP.oben", type="analog")
         self.assertEqual(entry, STATE["analog"][2])
         self.assertEqual(value, STATE["analog"][2]["value"])
 
     async def test_turn(self):
-        blnet = await aio.BLNET.create(ADDRESS, session=self.session, **self.blnet_kwargs())
+        blnet = await aio.Client.create(ADDRESS, session=self.session, **self.blnet_kwargs())
         await blnet.turn_on(10)
         self.assertEqual(self.server.get_node("A"), "2")
         await blnet.turn_auto(8)
@@ -101,13 +101,13 @@ class AsyncWebTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.server.get_node("1"), "1")
 
     async def test_turn_fails_without_login(self):
-        blnet = await aio.BLNET.create(ADDRESS, session=self.session, **self.blnet_kwargs("wrong"))
+        blnet = await aio.Client.create(ADDRESS, session=self.session, **self.blnet_kwargs("wrong"))
         with self.assertRaises(ConnectionError):
             await blnet.turn_on(10)
 
     async def test_web_needs_session(self):
         with self.assertRaises(ValueError):
-            await aio.BLNET.create(ADDRESS, **self.blnet_kwargs())
+            await aio.Client.create(ADDRESS, **self.blnet_kwargs())
 
 
 class AsyncDirectTest(unittest.IsolatedAsyncioTestCase):
@@ -126,7 +126,7 @@ class AsyncDirectTest(unittest.IsolatedAsyncioTestCase):
         )
 
     async def blnet(self, **kwargs):
-        blnet = await aio.BLNET.create(ADDRESS, **self.kwargs(**kwargs))
+        blnet = await aio.Client.create(ADDRESS, **self.kwargs(**kwargs))
         self.addAsyncCleanup(blnet.close)
         return blnet
 
@@ -137,7 +137,7 @@ class AsyncDirectTest(unittest.IsolatedAsyncioTestCase):
             {"value": 53.9, "type": "temperature", "unit_of_measurement": "°C"},
         )
         self.assertEqual(fetched["speed"][1], {"value": 24, "unit_of_measurement": None})
-        blocking = await asyncio.to_thread(lambda: BLNET(ADDRESS, **self.kwargs()).fetch())
+        blocking = await asyncio.to_thread(lambda: Client(ADDRESS, **self.kwargs()).fetch())
         self.assertEqual(fetched, blocking)
 
     async def test_fetch_succeeds_on_last_retry(self):
@@ -187,10 +187,10 @@ class AsyncDirectTest(unittest.IsolatedAsyncioTestCase):
     async def test_connection_refused(self):
         self.tearDown()
         with self.assertRaises(ConnectionError):
-            await aio.BLNETDirect.create(ADDRESS, self.port, timeout=1)
+            await aio.DirectClient.create(ADDRESS, self.port, timeout=1)
         self.setUp()
 
     async def test_read_logged_data_raises_on_invalid_reply(self):
-        blnet_direct = await aio.BLNETDirect.create(ADDRESS, self.port, timeout=1)
+        direct = await aio.DirectClient.create(ADDRESS, self.port, timeout=1)
         with self.assertRaises(ConnectionError):
-            await blnet_direct.get_data(1)
+            await direct.get_data(1)

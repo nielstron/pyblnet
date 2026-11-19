@@ -1,11 +1,11 @@
 """
 Combine what the web interface and the direct connection read into the data
-BLNET.fetch returns, and look values up in it. Shared by pyblnet.BLNET and
-pyblnet.aio.BLNET.
+Client.fetch returns, and look values up in it. Shared by pyblnet.sync.Client
+and pyblnet.aio.Client.
 """
 from .parser import ANALOG_UNITS
 
-# Units of the values only available via BLNETDirect, speed is a level 0-30
+# Units of the values only available via the direct connection, speed is a level 0-30
 UNITS = {"speed": None, "energy": "kWh", "power": "kW"}
 # Analog input type for the units shown by the web interface
 WEB_UNIT_TYPES = {unit: input_type for input_type, unit in ANALOG_UNITS.items() if unit is not None}
@@ -70,7 +70,7 @@ def find_value(data, name=None, id=None, type="digital", ret="value"):
     val = None
     dic = None
     for key, v in data[type].items():
-        # values fetched only via blnet_direct have no name
+        # values fetched only via the direct connection have no name
         if (name is not None and str(v.get("name")) == str(name)) or (
             id is not None and str(key) == str(id)
         ):

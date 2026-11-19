@@ -11,13 +11,13 @@ as possible.
 @author: Niels
 """
 from ..protocol.values import add_direct, add_web, convert_web, empty_data, find_value
-from .direct import BLNETDirect
-from .web import BLNETWeb
+from .direct import DirectClient
+from .web import WebClient
 
 from urllib.parse import urlparse
 
 
-class BLNET(object):
+class Client(object):
     """
     General high-level BLNET interface.
 
@@ -58,10 +58,10 @@ class BLNET(object):
         self.address = address
         self.timeout = timeout
         self.max_retries = max_retries
-        self.blnet_web = None
-        self.blnet_direct = None
+        self.web = None
+        self.direct = None
         if use_web:
-            self.blnet_web = BLNETWeb(
+            self.web = WebClient(
                 "{}:{}".format(address, web_port), password, timeout
             )
         if use_ta:
@@ -69,7 +69,7 @@ class BLNET(object):
             # especially not if not prefixed with http://
             # see https://docs.python.org/3/library/urllib.parse.html#urllib.parse.urlparse
             host = urlparse(address).hostname or address
-            self.blnet_direct = BLNETDirect(host, ta_port, timeout=timeout)
+            self.direct = DirectClient(host, ta_port, timeout=timeout)
 
     def fetch(self, node=None):
         """
@@ -77,11 +77,11 @@ class BLNET(object):
         (defaults to active node on the device)
         """
         data = empty_data()
-        if self.blnet_web:
-            add_web(data, *self.blnet_web.fetch(node))
-        if self.blnet_direct:
+        if self.web:
+            add_web(data, *self.web.fetch(node))
+        if self.direct:
             add_direct(
-                data, self.blnet_direct.get_latest(self.max_retries)[0], self.blnet_web is not None
+                data, self.direct.get_latest(self.max_retries)[0], self.web is not None
             )
         return data
 
@@ -107,8 +107,8 @@ class BLNET(object):
         return self._turn(digital_id, "AUTO", can_node)
 
     def _turn(self, digital_id, value, can_node=None):
-        if self.blnet_web:
-            return self.blnet_web.turn(digital_id, value, can_node)
+        if self.web:
+            return self.web.turn(digital_id, value, can_node)
         else:
             raise EnvironmentError("Can't set values with blnet web disabled")
 

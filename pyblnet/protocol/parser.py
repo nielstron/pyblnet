@@ -54,7 +54,7 @@ ANALOG_UNITS = {
 }
 
 
-class BLNETParser:
+class Parser:
     def __init__(self, data):
         """
         parse a binary string containing a dataset

@@ -1,7 +1,7 @@
 """
 The web interface of the BL-NET without I/O: parsing its pages, and the
 requests to log in, read values and set outputs as flows (see flow.py).
-pyblnet.sync.BLNETWeb runs them with requests, pyblnet.aio.BLNETWeb with aiohttp.
+pyblnet.sync.WebClient runs them with requests, pyblnet.aio.WebClient with aiohttp.
 """
 from __future__ import annotations
 
@@ -245,10 +245,10 @@ def probe():
     return is_blnet_page(response.text)
 
 
-class WebSession:
+class WebProtocol:
     """
     The state of a session with the web interface, and the flows using it.
-    The flows return what the methods of BLNETWeb return.
+    The flows return what the methods of WebClient return.
     """
 
     def __init__(self, password):
@@ -337,7 +337,7 @@ class WebSession:
         return (yield from self._still_logged_in(digital_path(digital_id, value)))
 
     def _logged_in_session(self, flow):
-        """Run flow between logging in and out, like `with BLNETWeb(...)`"""
+        """Run flow between logging in and out, like `with WebClient(...)`"""
         yield from self.log_in()
         try:
             result = yield from flow

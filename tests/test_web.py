@@ -10,7 +10,7 @@ from tests.test_structure.blnet_mock_server import BLNETServer, BLNETRequestHand
 import time
 
 # For the tests
-from pyblnet import BLNET, blnet_test, BLNETWeb
+from pyblnet import Client, blnet_test, WebClient
 from tests.web_raw.web_state import STATE, STATE_ANALOG, STATE_DIGITAL
 
 ADDRESS = "localhost"
@@ -26,13 +26,13 @@ class OfflineTest(unittest.TestCase):
 
     def test_blnet_web(self):
         try:
-            BLNETWeb(self.url)
+            WebClient(self.url)
             self.fail("Didn't throw an exception for offline blnetweb")
         except ValueError:
             pass
 
 
-class BLNETWebTest(unittest.TestCase):
+class WebClientTest(unittest.TestCase):
 
     server = None
     server_control = None
@@ -75,10 +75,10 @@ class BLNETWebTest(unittest.TestCase):
         Test logging in via different urls
         and that log out after a with clause happens correctly
         """
-        with BLNETWeb(self.url, password=PASSWORD, timeout=10) as blnet:
+        with WebClient(self.url, password=PASSWORD, timeout=10) as blnet:
             self.assertTrue(blnet.logged_in())
         # test without http
-        blnet = BLNETWeb(
+        blnet = WebClient(
             "{}:{}".format(ADDRESS, self.port), password=PASSWORD, timeout=10
         )
         with blnet as blnet:
@@ -87,7 +87,7 @@ class BLNETWebTest(unittest.TestCase):
     def test_blnet_fetch(self):
         """Test fetching data in higher level class"""
         self.assertEqual(
-            BLNET(
+            Client(
                 ADDRESS, password=PASSWORD, timeout=10, use_ta=False, web_port=self.port
             ).fetch(),
             STATE,
@@ -100,7 +100,7 @@ class BLNETWebTest(unittest.TestCase):
         def scratch_tuple(type, id, ret):
             return fetched[type][id][ret], fetched[type][id], fetched
 
-        blnet = BLNET(
+        blnet = Client(
             ADDRESS, password=PASSWORD, timeout=10, use_ta=False, web_port=self.port
         )
         self.assertEqual(
@@ -126,7 +126,7 @@ class BLNETWebTest(unittest.TestCase):
 
     def test_blnet_turn(self):
         """Test higher level turn methods"""
-        blnet = BLNET(
+        blnet = Client(
             ADDRESS, password=PASSWORD, timeout=10, use_ta=False, web_port=self.port
         )
         blnet.turn_on(10)
@@ -141,7 +141,7 @@ class BLNETWebTest(unittest.TestCase):
     def test_blnet_fetch_error(self):
         """Test fetching data in higher level class with missing password (or otherwise denied access to the data)"""
         self.assertEqual(
-            BLNET(
+            Client(
                 ADDRESS, password=None, timeout=10, use_ta=False, web_port=self.port
             ).fetch(),
             {"analog": {}, "digital": {}, "energy": {}, "power": {}, "speed": {}},
@@ -149,17 +149,17 @@ class BLNETWebTest(unittest.TestCase):
 
     def test_blnet_web_analog(self):
         """Test reading analog values"""
-        with BLNETWeb(self.url, password=PASSWORD, timeout=10) as blnet:
+        with WebClient(self.url, password=PASSWORD, timeout=10) as blnet:
             self.assertEqual(blnet.read_analog_values(), STATE_ANALOG)
 
     def test_blnet_web_digital(self):
         """Test reading digital values"""
-        with BLNETWeb(self.url, password=PASSWORD, timeout=10) as blnet:
+        with WebClient(self.url, password=PASSWORD, timeout=10) as blnet:
             self.assertEqual(blnet.read_digital_values(), STATE_DIGITAL)
 
     def test_blnet_web_set_digital(self):
         """Test setting digital values"""
-        with BLNETWeb(self.url, password=PASSWORD, timeout=10) as blnet:
+        with WebClient(self.url, password=PASSWORD, timeout=10) as blnet:
             blnet.set_digital_value(10, "2")
             self.assertEqual(self.server.get_node("A"), "2")
             blnet.set_digital_value(9, "EIN")
@@ -189,7 +189,7 @@ class BLNETWebTest(unittest.TestCase):
 
     def test_blnet_web_log_out(self):
         """Test setting digital values"""
-        blnet = BLNETWeb(self.url, password=PASSWORD, timeout=10)
+        blnet = WebClient(self.url, password=PASSWORD, timeout=10)
         self.assertFalse(blnet.logged_in())
         with blnet as blnet:
             self.assertTrue(blnet.logged_in())

@@ -9,7 +9,7 @@ import unittest
 import warnings
 from unittest import mock
 
-from pyblnet import BLNET, BLNETDirect
+from pyblnet import Client, DirectClient
 from tests.test_structure.blnet_direct_mock_server import (
     BLNETDirectServer,
     DL_LATEST_RESPONSE,
@@ -35,7 +35,7 @@ class BLNETDirectOnlyTest(unittest.TestCase):
         self.server.server_close()
 
     def blnet(self, max_retries=5, timeout=5):
-        return BLNET(
+        return Client(
             ADDRESS,
             ta_port=self.port,
             timeout=timeout,
@@ -86,7 +86,7 @@ class BLNETDirectOnlyTest(unittest.TestCase):
         self.assertEqual(data["energy"][1]["value"], 362847.4)
 
     def test_timeout_does_not_change_global_socket_timeout(self):
-        BLNETDirect(ADDRESS, self.port, timeout=7)
+        DirectClient(ADDRESS, self.port, timeout=7)
         self.assertIsNone(socket.getdefaulttimeout())
 
     def test_failed_connection_attempt_closes_socket(self):
@@ -102,7 +102,7 @@ class BLNETDirectOnlyTest(unittest.TestCase):
         with mock.patch("pyblnet.sync.direct.getaddrinfo", return_value=addresses):
             with warnings.catch_warnings(record=True) as caught:
                 warnings.simplefilter("always", ResourceWarning)
-                BLNETDirect(ADDRESS, self.port, timeout=7)
+                DirectClient(ADDRESS, self.port, timeout=7)
                 gc.collect()
         self.assertEqual([w for w in caught if w.category is ResourceWarning], [])
 
@@ -110,7 +110,7 @@ class BLNETDirectOnlyTest(unittest.TestCase):
         self.server.silent = True
         start = time.monotonic()
         with self.assertRaises(socket.timeout):
-            BLNET(ADDRESS, ta_port=self.port, timeout=1, use_web=False, use_ta=True)
+            Client(ADDRESS, ta_port=self.port, timeout=1, use_web=False, use_ta=True)
         self.assertLess(time.monotonic() - start, 5)
 
     def test_fetch_recovers_after_timeout(self):
@@ -142,20 +142,20 @@ class BLNETDirectOnlyTest(unittest.TestCase):
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always", ResourceWarning)
             with self.assertRaises(socket.timeout):
-                BLNETDirect(ADDRESS, self.port, timeout=1)
+                DirectClient(ADDRESS, self.port, timeout=1)
             gc.collect()
         self.assertEqual([w for w in caught if w.category is ResourceWarning], [])
 
     def test_read_logged_data_raises_when_blnet_hangs_up(self):
-        blnet_direct = BLNETDirect(ADDRESS, self.port, timeout=1)
+        direct = DirectClient(ADDRESS, self.port, timeout=1)
         self.server.close_on = READ_DATA
         with self.assertRaises(ConnectionError):
-            blnet_direct._get_data(1)
+            direct._get_data(1)
 
     def test_read_logged_data_raises_on_invalid_reply(self):
-        blnet_direct = BLNETDirect(ADDRESS, self.port, timeout=1)
+        direct = DirectClient(ADDRESS, self.port, timeout=1)
         with self.assertRaises(ConnectionError):
-            blnet_direct._get_data(1)
+            direct._get_data(1)
 
     def test_fetch_waits_while_blnet_has_no_new_data(self):
         # Real BL-NETs answer "no data" for up to a few seconds after a read

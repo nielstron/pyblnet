@@ -1,7 +1,7 @@
 """
 The direct connection (TA port, PC-BLNET protocol) of the BL-NET without
 I/O: the commands, how to read their replies, and the reads as flows (see
-flow.py). pyblnet.sync.BLNETDirect runs them with a socket, pyblnet.aio.BLNETDirect with
+flow.py). pyblnet.sync.DirectClient runs them with a socket, pyblnet.aio.DirectClient with
 asyncio streams.
 
 This is basically a python port of a script by berwinter
@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from datetime import datetime
 import struct
 
-from .parser import BLNETParser
+from .parser import Parser
 
 # Constants for the UVR Communication
 CAN_MODE = b"\xDC"
@@ -275,14 +275,14 @@ class DirectProtocol:
         frames = {}
         if self.mode == CAN_MODE:
             for frame in range(0, self._can_frames):
-                frames[frame] = BLNETParser(
+                frames[frame] = Parser(
                     data[3 + DATASET_SIZE * frame : 3 + DATASET_SIZE * (frame + 1)]
                 )
         elif self.mode == DL_MODE:
-            frames[0] = BLNETParser(data[:DATASET_SIZE])
+            frames[0] = Parser(data[:DATASET_SIZE])
         elif self.mode == DL2_MODE:
-            frames[0] = BLNETParser(data[:DATASET_SIZE])
-            frames[1] = BLNETParser(data[3 + DATASET_SIZE : 3 + DATASET_SIZE + DATASET_SIZE])
+            frames[0] = Parser(data[:DATASET_SIZE])
+            frames[1] = Parser(data[3 + DATASET_SIZE : 3 + DATASET_SIZE + DATASET_SIZE])
 
         start = 3 if self.mode == CAN_MODE else 0
         if data[start : start + DATASET_SIZE - 6] == b"0x00" * (DATASET_SIZE - 6):
@@ -357,10 +357,10 @@ class DirectProtocol:
         """
         frames = {}
         if self.mode == CAN_MODE:
-            frames[frame] = BLNETParser(data[1 : LATEST_SIZE + 1])
+            frames[frame] = Parser(data[1 : LATEST_SIZE + 1])
         elif self.mode == DL_MODE:
-            frames[0] = BLNETParser(data[1 : LATEST_SIZE + 1])
+            frames[0] = Parser(data[1 : LATEST_SIZE + 1])
         elif self.mode == DL2_MODE:
-            frames[0] = BLNETParser(data[1 : LATEST_SIZE + 1])
-            frames[1] = BLNETParser(data[LATEST_SIZE + 1 : 2 * LATEST_SIZE + 1])
+            frames[0] = Parser(data[1 : LATEST_SIZE + 1])
+            frames[1] = Parser(data[LATEST_SIZE + 1 : 2 * LATEST_SIZE + 1])
         return {k: v.to_dict() for k, v in frames.items()}

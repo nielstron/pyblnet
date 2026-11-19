@@ -13,7 +13,7 @@ runs it with requests.
 import requests
 
 from ..protocol.flow import run_sync
-from ..protocol.web import Response, TransportError, WebSession, probe
+from ..protocol.web import Response, TransportError, WebProtocol, probe
 
 
 def _performer(base_url, timeout):
@@ -50,7 +50,7 @@ def blnet_test(ip, timeout=5, id=0):
     return run_sync(probe(), _performer(_with_scheme(ip), timeout))
 
 
-class BLNETWeb(object):
+class WebClient(object):
     """
     Interface for connecting with, collecting data from and controlling the BLNet
     via it's HTTP-interface
@@ -74,16 +74,16 @@ class BLNETWeb(object):
             raise ValueError("No BLNET found under given address: {}".format(ip))
         self.ip = ip
         self._timeout = timeout
-        self.session = WebSession(password)
+        self.protocol = WebProtocol(password)
 
     @property
     def password(self):
-        return self.session.password
+        return self.protocol.password
 
     @property
     def current_taid(self):
         """TAID cookie in the form 'TAID="EEEE"'"""
-        return self.session.current_taid
+        return self.protocol.current_taid
 
     def _run(self, flow):
         return run_sync(flow, _performer(self.ip, self._timeout))
@@ -106,7 +106,7 @@ class BLNETWeb(object):
         Determines whether the object is still connected to the BLNET
         / Logged into the web interface
         """
-        return self._run(self.session.logged_in())
+        return self._run(self.protocol.logged_in())
 
     def log_in(self):
         """
@@ -114,7 +114,7 @@ class BLNETWeb(object):
 
         Return: Login successful
         """
-        return self._run(self.session.log_in())
+        return self._run(self.protocol.log_in())
 
     def log_out(self):
         """
@@ -122,7 +122,7 @@ class BLNETWeb(object):
 
         Return: successful log out
         """
-        return self._run(self.session.log_out())
+        return self._run(self.protocol.log_out())
 
     def set_node(self, node):
         """
@@ -131,14 +131,14 @@ class BLNETWeb(object):
 
         Return: Still logged in (indicating successful node change)
         """
-        return self._run(self.session.set_node(node))
+        return self._run(self.protocol.set_node(node))
 
     def read_analog_values(self):
         """
         Reads all analog values (temperatures, speeds) from the web interface
         and returns list of quadruples of id, name, value, unit of measurement
         """
-        return self._run(self.session.read_analog_values())
+        return self._run(self.protocol.read_analog_values())
 
     def read_digital_values(self):
         """
@@ -146,7 +146,7 @@ class BLNETWeb(object):
         and returns list of quadruples of id, name, mode (AUTO/HAND), value
         (EIN/AUS)
         """
-        return self._run(self.session.read_digital_values())
+        return self._run(self.protocol.read_digital_values())
 
     def set_digital_value(self, digital_id, value):
         """
@@ -159,7 +159,7 @@ class BLNETWeb(object):
             value    value to change the state to
         Return: still logged in (indicating successful set)
         """
-        return self._run(self.session.set_digital_value(digital_id, value))
+        return self._run(self.protocol.set_digital_value(digital_id, value))
 
     def fetch(self, node=None):
         """
@@ -167,11 +167,11 @@ class BLNETWeb(object):
         and log out. Returns both lists, see read_analog_values and
         read_digital_values.
         """
-        return self._run(self.session.fetch(node))
+        return self._run(self.protocol.fetch(node))
 
     def turn(self, digital_id, value, node=None):
         """
         Set a digital value in a session of its own, raises ConnectionError
         if it fails
         """
-        return self._run(self.session.turn(digital_id, value, node))
+        return self._run(self.protocol.turn(digital_id, value, node))

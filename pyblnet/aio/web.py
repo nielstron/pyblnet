@@ -7,7 +7,7 @@ import aiohttp
 from yarl import URL
 
 from ..protocol.flow import run_async
-from ..protocol.web import Response, TransportError, WebSession, probe
+from ..protocol.web import Response, TransportError, WebProtocol, probe
 
 
 def _with_scheme(ip):
@@ -45,8 +45,8 @@ async def blnet_test(session, ip, timeout=5):
     return await run_async(probe(), _performer(session, _with_scheme(ip), timeout))
 
 
-class BLNETWeb:
-    """The web interface of the BL-NET, see pyblnet.BLNETWeb"""
+class WebClient:
+    """The web interface of the BL-NET, see pyblnet.sync.WebClient"""
 
     _def_password = "0128"  # default password is 0128
 
@@ -56,16 +56,16 @@ class BLNETWeb:
         assert password is None or isinstance(password, str)
         assert timeout is None or isinstance(timeout, int)
         self.ip = _with_scheme(ip)
-        self.session = WebSession(password)
+        self.protocol = WebProtocol(password)
         self._perform = _performer(session, self.ip, timeout)
 
     @classmethod
     async def create(cls, ip, session, password=_def_password, timeout=5):
         """Raises ValueError if no BL-NET answers under ip"""
-        blnet_web = cls(ip, session, password, timeout)
-        if not await run_async(probe(), blnet_web._perform):
-            raise ValueError("No BLNET found under given address: {}".format(blnet_web.ip))
-        return blnet_web
+        web = cls(ip, session, password, timeout)
+        if not await run_async(probe(), web._perform):
+            raise ValueError("No BLNET found under given address: {}".format(web.ip))
+        return web
 
     async def _run(self, flow):
         return await run_async(flow, self._perform)
@@ -78,28 +78,28 @@ class BLNETWeb:
         await self.log_out()
 
     async def logged_in(self):
-        return await self._run(self.session.logged_in())
+        return await self._run(self.protocol.logged_in())
 
     async def log_in(self):
-        return await self._run(self.session.log_in())
+        return await self._run(self.protocol.log_in())
 
     async def log_out(self):
-        return await self._run(self.session.log_out())
+        return await self._run(self.protocol.log_out())
 
     async def set_node(self, node):
-        return await self._run(self.session.set_node(node))
+        return await self._run(self.protocol.set_node(node))
 
     async def read_analog_values(self):
-        return await self._run(self.session.read_analog_values())
+        return await self._run(self.protocol.read_analog_values())
 
     async def read_digital_values(self):
-        return await self._run(self.session.read_digital_values())
+        return await self._run(self.protocol.read_digital_values())
 
     async def set_digital_value(self, digital_id, value):
-        return await self._run(self.session.set_digital_value(digital_id, value))
+        return await self._run(self.protocol.set_digital_value(digital_id, value))
 
     async def fetch(self, node=None):
-        return await self._run(self.session.fetch(node))
+        return await self._run(self.protocol.fetch(node))
 
     async def turn(self, digital_id, value, node=None):
-        return await self._run(self.session.turn(digital_id, value, node))
+        return await self._run(self.protocol.turn(digital_id, value, node))
