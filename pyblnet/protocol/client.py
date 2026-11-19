@@ -5,7 +5,7 @@ pyblnet.sync.Client and pyblnet.aio.Client.
 """
 from urllib.parse import urlparse
 
-from .flow import _FACTORY, Creatable
+from .flow import Creatable
 from .values import add_direct, add_web, empty_data, find_value
 from .web import Request
 
