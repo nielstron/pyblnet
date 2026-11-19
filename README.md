@@ -4,76 +4,89 @@
 [![Build status](https://github.com/PyBLNET/pyblnet/actions/workflows/build.yml/badge.svg)](https://github.com/PyBLNET/pyblnet/actions/workflows/build.yml)
 [![Coverage Status](https://coveralls.io/repos/github/PyBLNET/pyblnet/badge.svg?branch=master)](https://coveralls.io/github/PyBLNET/pyblnet?branch=master)
 
-A package that connects to the BL-NET that is connected itself to a UVR1611 device by Technische Alternative. 
+A package that connects to the BL-NET that is connected itself to a UVR1611 device by Technische Alternative.
 It is able to read digital and analog values as well as to set switches to ON/OFF/AUTO.
 
 Documentation on the modules and their methods can be found with the methods and modules themselves.
 
-Two interfaces to BLNet exist and both are supported:
-- Webinterface  - pyblnet.sync.web.Client
-- BLNet-Direct protocol [1] - pyblnet.sync.direct.Client
+## Installation
 
-However, as of now, there is no testing on the BLNet-Direct protocol *of any kind*, so enabling it is discouraged until the interface is fixed.
-Parsing the data via the web interface is the preferred way of accessing the BLNet for now.
-
-The class Client is a wrapper around the two classes. When creating it, the two interfaces can be activated/deactivated. 
-The direct connection provides 'analog', 'digital',  'speed', 'energy', 'power', whereas the web interface supports 'analog' and 'digital' only.
-If both are active, the direct connection has priority.
-Setting switches and reading their manual/auto state is only possible via the web interface.
-
-### Usage
-
-```python
-from pyblnet import Client
-from pyblnet.sync import direct, web
-
-ip = '192.168.178.10'
-
-# Check if there is a blnet at given address
-web.Client.probe(ip)  # -> True/False
-
-# Convenient high level interface, the clients are made with create(),
-# which checks the BL-NET
-blnet = Client.create(ip, password='pass', timeout=5)
-
-# Control a switch by its ID
-blnet.turn_on(10)
-blnet.turn_auto(10)
-blnet.turn_off(10)
-
-# Fetch data (contains all available data using enabled interfaces)
-print(blnet.fetch())
-
-# The low level modules are also available
-# note that the direct use of these modules is discouraged though
-
-# Fetch the latest data via web interface
-# Note that manual log in and log out are required
-# when not using the with statement
-with web.Client.create(ip, password='pass', timeout=5) as blnet_session:
-    print(blnet_session.read_analog_values())
-    print(blnet_session.read_digital_values())
-
-    # For publishing values
-    blnet_session.set_digital_value('10', 'AUS')
-    # Note that without explicit log out,
-    # the BLNET will block any further web access for the next 150s
-    # this is handled automatically when using the with statement
-
-# Fetch data via the Protocol developed by TA
-blnet = direct.Client.create(ip)
-# Fetching the latest data
-print(blnet.get_latest())
-# Still inofficial because unexplicably failing often
-print(blnet.get_data(1))
+```
+pip install pyblnet          # blocking clients
+pip install pyblnet[async]   # also the async clients, with aiohttp
 ```
 
+## Interfaces
 
-### Async usage
+The BL-NET has two interfaces, and pyblnet has a client for each:
 
-`pyblnet.aio` has the same classes with awaitable methods, for asyncio applications like Home Assistant.
-It needs `aiohttp`: `pip install pyblnet[async]`.
-Like the blocking ones, they are made with `create()`, which checks the BL-NET.
+- `web.Client`: the web interface. Reads 'analog' and 'digital' values with their names, and sets switches.
+- `direct.Client`: the direct connection (BLNet-Direct protocol [1], TA port).
+  Reads 'analog', 'digital', 'speed', 'energy' and 'power' values, without names.
+  It is only tested against a simulated BL-NET, the web interface is the preferred way of accessing it.
+
+`Client` combines both, each can be enabled or disabled with `use_web` and `use_ta`.
+If both are enabled, values of the direct connection have priority.
+Setting switches and reading their manual/auto state is only possible via the web interface.
+
+All clients exist blocking in `pyblnet.sync` and async in `pyblnet.aio`, with the same methods.
+They are made with `create()`, which checks the BL-NET: it raises `ValueError` if no BL-NET answers
+at the web interface, and `ConnectionError` if the direct connection is not supported.
+
+## Blocking usage
+
+### Client
+
+```python
+from pyblnet import Client  # the same as pyblnet.sync.Client
+
+blnet = Client.create('192.168.178.10', password='pass', timeout=5)
+
+# Fetch all data available via the enabled interfaces
+print(blnet.fetch())
+
+# Get a value by its name or id
+value, entry, data = blnet.get_analog_value(name='TSP.oben')
+
+# Control a switch by its id
+blnet.turn_on(10)
+blnet.turn_off(10)
+blnet.turn_auto(10)
+```
+
+### Web interface
+
+```python
+from pyblnet.sync import web
+
+# Check if there is a BL-NET at the given address
+web.Client.probe('192.168.178.10')  # -> True/False
+
+# The with statement logs in and out. Without logging out,
+# the BL-NET blocks any further web access for the next 150s.
+with web.Client.create('192.168.178.10', password='pass', timeout=5) as client:
+    print(client.read_analog_values())
+    print(client.read_digital_values())
+    client.set_digital_value(10, 'AUS')
+```
+
+### Direct connection
+
+```python
+from pyblnet.sync import direct
+
+client = direct.Client.create('192.168.178.10')
+print(client.get_latest())
+# Logged data, still inofficial because it fails often
+print(client.get_data(1))
+```
+
+## Async usage
+
+The async clients need an `aiohttp` session for the web interface, and are closed with `close()`
+if they use the direct connection.
+
+### Client
 
 ```python
 import asyncio
@@ -82,11 +95,34 @@ from pyblnet import aio
 
 async def main():
     async with aiohttp.ClientSession() as session:
-        blnet = await aio.Client.create(ip, session=session, password='pass', timeout=5)
+        blnet = await aio.Client.create('192.168.178.10', session, password='pass', timeout=5)
         print(await blnet.fetch())
         await blnet.turn_auto(10)
 
 asyncio.run(main())
+```
+
+### Web interface
+
+```python
+async def main():
+    async with aiohttp.ClientSession() as session:
+        print(await aio.web.Client.probe('192.168.178.10', session))  # -> True/False
+        client = await aio.web.Client.create('192.168.178.10', session, password='pass')
+        async with client:
+            print(await client.read_analog_values())
+            await client.set_digital_value(10, 'AUS')
+```
+
+### Direct connection
+
+```python
+async def main():
+    client = await aio.direct.Client.create('192.168.178.10')
+    try:
+        print(await client.get_latest())
+    finally:
+        await client.close()
 ```
 
 [1] Technische Alternative, "Schnittstelle Winsol <> Bootloader" (2006), archived copy: http://web.archive.org/web/20160122124754/http://www.haus-terra.at:80/heizung/download/Schnittstelle/Schnittstelle_PC_Bootloader.pdf
