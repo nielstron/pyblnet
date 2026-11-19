@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""Read and control a UVR1611 via a BL-NET"""
 
-import warnings
+from .sync.client import Client
 
-try:
-    from .sync.client import Client
-except ImportError as e:
-    warnings.warn(ImportWarning(e))
+__all__ = ["Client"]
 
-VERSION = (1, 0, 0)
-
+# the version of the package, pyproject.toml reads it from here
+__version__ = "1.0.0"
+VERSION = tuple(int(part) for part in __version__.split("."))
