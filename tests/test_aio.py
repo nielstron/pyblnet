@@ -44,14 +44,14 @@ class AsyncWebTest(unittest.IsolatedAsyncioTestCase):
     def blnet_kwargs(self, password=PASSWORD):
         return dict(password=password, timeout=10, use_ta=False, web_port=self.port)
 
-    async def test_blnet_test(self):
-        self.assertTrue(await aio.blnet_test(self.session, self.url, timeout=10))
+    async def test_probe(self):
+        self.assertTrue(await aio.web.Client.probe(self.url, self.session, timeout=10))
         self.server.set_blocked()
-        self.assertTrue(await aio.blnet_test(self.session, self.url, timeout=10))
+        self.assertTrue(await aio.web.Client.probe(self.url, self.session, timeout=10))
 
-    async def test_blnet_test_offline(self):
+    async def test_probe_offline(self):
         self.server_control.stop_server()
-        self.assertFalse(await aio.blnet_test(self.session, self.url, timeout=2))
+        self.assertFalse(await aio.web.Client.probe(self.url, self.session, timeout=2))
         with self.assertRaises(ValueError):
             await aio.web.Client.create(self.url, self.session)
 

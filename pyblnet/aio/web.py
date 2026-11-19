@@ -6,8 +6,8 @@ import asyncio
 import aiohttp
 from yarl import URL
 
-from ..protocol.flow import AsyncRunner, run_async
-from ..protocol.web import DEFAULT_PASSWORD, ClientBase, Response, TransportError, base_url, probe
+from ..protocol.flow import AsyncRunner
+from ..protocol.web import DEFAULT_PASSWORD, ClientBase, Response, TransportError
 
 
 def _performer(session, url, timeout):
@@ -31,11 +31,6 @@ def _performer(session, url, timeout):
             raise TransportError(err) from err
 
     return perform
-
-
-async def blnet_test(session, ip, timeout=5):
-    """Whether a BL-NET answers under the given address"""
-    return await run_async(probe(), _performer(session, base_url(ip), timeout))
 
 
 class Client(AsyncRunner, ClientBase):

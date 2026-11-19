@@ -11,7 +11,7 @@ import html
 import re
 from html.parser import HTMLParser
 
-from .flow import Creatable
+from .flow import _FACTORY, Creatable
 
 # default password of the web interface
 DEFAULT_PASSWORD = "0128"
@@ -433,6 +433,15 @@ class ClientBase(Creatable):
         Creates the header to pass the session TAID as cookie
         """
         return {"Cookie": self.current_taid}
+
+    @classmethod
+    def probe(cls, *args, **kwargs):
+        """
+        Whether a BL-NET answers, takes the arguments of create(). Returns
+        True or False like the other methods: blocking, or as an awaitable.
+        """
+        client = cls(*args, _factory=_FACTORY, **kwargs)
+        return client._run(probe())
 
     def _check(self):
         """Flow: raise ValueError if no BL-NET answers at self.ip"""

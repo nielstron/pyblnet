@@ -16,6 +16,5 @@ Pass a session that doesn't share its cookies with other BL-NETs.
 
 from .client import Client
 from . import direct, web
-from .web import blnet_test
 
-__all__ = ["Client", "blnet_test", "direct", "web"]
+__all__ = ["Client", "direct", "web"]

@@ -24,13 +24,13 @@ Setting switches and reading their manual/auto state is only possible via the we
 ### Usage
 
 ```python
-from pyblnet import blnet_test, Client
+from pyblnet import Client
 from pyblnet.sync import direct, web
 
 ip = '192.168.178.10'
 
 # Check if there is a blnet at given address
-blnet_test(ip)  # -> True/False
+web.Client.probe(ip)  # -> True/False
 
 # Convenient high level interface, the clients are made with create(),
 # which checks the BL-NET

@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from pyblnet import Client, blnet_test
+from pyblnet import Client
 from pyblnet.sync import web
 from pyblnet.protocol.parser import Parser
 
@@ -39,17 +39,17 @@ class WebPagesTest(unittest.TestCase):
         with serve("main.htm"):
             self.web = web.Client.create("blnet", password=None)
 
-    def test_blnet_test_recognizes_main_page(self):
+    def test_probe_recognizes_main_page(self):
         with serve("main.htm"):
-            self.assertTrue(blnet_test("blnet"))
+            self.assertTrue(web.Client.probe("blnet"))
 
-    def test_blnet_test_recognizes_access_denied_page(self):
+    def test_probe_recognizes_access_denied_page(self):
         with serve(".error.html"):
-            self.assertTrue(blnet_test("blnet"))
+            self.assertTrue(web.Client.probe("blnet"))
 
-    def test_blnet_test_rejects_other_pages(self):
+    def test_probe_rejects_other_pages(self):
         with serve("580500.htm"):
-            self.assertFalse(blnet_test("blnet"))
+            self.assertFalse(web.Client.probe("blnet"))
 
     def test_read_analog_values_with_negative_value(self):
         with serve("580500.alternative.htm"):

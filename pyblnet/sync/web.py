@@ -12,8 +12,8 @@ runs it with requests.
 
 import requests
 
-from ..protocol.flow import SyncRunner, run_sync
-from ..protocol.web import DEFAULT_PASSWORD, ClientBase, Response, TransportError, base_url, probe
+from ..protocol.flow import SyncRunner
+from ..protocol.web import DEFAULT_PASSWORD, ClientBase, Response, TransportError
 
 
 def _performer(url, timeout):
@@ -32,15 +32,6 @@ def _performer(url, timeout):
         return Response(r.text, r.headers.get("Set-Cookie"))
 
     return perform
-
-
-def blnet_test(ip, timeout=5):
-    """
-    Tests whether an BLNET answers under given ip
-    Attributes:
-        ip      IP of the BLNET
-    """
-    return run_sync(probe(), _performer(base_url(ip), timeout))
 
 
 class Client(SyncRunner, ClientBase):
