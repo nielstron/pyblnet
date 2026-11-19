@@ -6,27 +6,20 @@ import asyncio
 import aiohttp
 from yarl import URL
 
-from ..protocol.flow import run_async
-from ..protocol.web import Protocol, Response, TransportError, probe
+from ..protocol.flow import AsyncRunner, run_async
+from ..protocol.web import DEFAULT_PASSWORD, ClientBase, Response, TransportError, base_url, probe
 
 
-def _with_scheme(ip):
-    if not ip.startswith("http://") and not ip.startswith("https://"):
-        ip = "http://" + ip
-    return ip
-
-
-def _performer(session, base_url, timeout):
-    """Perform the requests of the pyblnet.protocol.web flows on base_url with aiohttp"""
+def _performer(session, url, timeout):
+    """Perform the requests of the pyblnet.protocol.web flows on url with aiohttp"""
     client_timeout = aiohttp.ClientTimeout(total=timeout)
 
     async def perform(request):
-        # the BL-NET expects its URLs exactly as written, e.g. "?blp=A1200101&1238653"
-        url = URL(base_url + request.path, encoded=True)
         try:
             async with session.request(
                 request.method,
-                url,
+                # the BL-NET expects its URLs exactly as written, e.g. "?blp=A1200101&1238653"
+                URL(url + request.path, encoded=True),
                 data=request.data,
                 headers=request.headers,
                 timeout=client_timeout,
@@ -42,33 +35,26 @@ def _performer(session, base_url, timeout):
 
 async def blnet_test(session, ip, timeout=5):
     """Whether a BL-NET answers under the given address"""
-    return await run_async(probe(), _performer(session, _with_scheme(ip), timeout))
+    return await run_async(probe(), _performer(session, base_url(ip), timeout))
 
 
-class Client:
-    """The web interface of the BL-NET, see pyblnet.sync.web.Client"""
+class Client(AsyncRunner, ClientBase):
+    """
+    The web interface of the BL-NET, see pyblnet.protocol.web.ClientBase for
+    its methods, which are awaitable here. The constructor doesn't check the
+    address, use create(). Use it in an async with statement to log in and out.
+    """
 
-    _def_password = "0128"  # default password is 0128
-
-    def __init__(self, ip, session, password=_def_password, timeout=5):
-        """Doesn't check the address, use create() for that"""
-        assert isinstance(ip, str)
-        assert password is None or isinstance(password, str)
-        assert timeout is None or isinstance(timeout, int)
-        self.ip = _with_scheme(ip)
-        self.protocol = Protocol(password)
+    def __init__(self, ip, session, password=DEFAULT_PASSWORD, timeout=5):
+        super().__init__(ip, password, timeout)
         self._perform = _performer(session, self.ip, timeout)
 
     @classmethod
-    async def create(cls, ip, session, password=_def_password, timeout=5):
+    async def create(cls, ip, session, password=DEFAULT_PASSWORD, timeout=5):
         """Raises ValueError if no BL-NET answers under ip"""
         client = cls(ip, session, password, timeout)
-        if not await run_async(probe(), client._perform):
-            raise ValueError("No BLNET found under given address: {}".format(client.ip))
+        await client._check()
         return client
-
-    async def _run(self, flow):
-        return await run_async(flow, self._perform)
 
     async def __aenter__(self):
         await self.log_in()
@@ -76,30 +62,3 @@ class Client:
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.log_out()
-
-    async def logged_in(self):
-        return await self._run(self.protocol.logged_in())
-
-    async def log_in(self):
-        return await self._run(self.protocol.log_in())
-
-    async def log_out(self):
-        return await self._run(self.protocol.log_out())
-
-    async def set_node(self, node):
-        return await self._run(self.protocol.set_node(node))
-
-    async def read_analog_values(self):
-        return await self._run(self.protocol.read_analog_values())
-
-    async def read_digital_values(self):
-        return await self._run(self.protocol.read_digital_values())
-
-    async def set_digital_value(self, digital_id, value):
-        return await self._run(self.protocol.set_digital_value(digital_id, value))
-
-    async def fetch(self, node=None):
-        return await self._run(self.protocol.fetch(node))
-
-    async def turn(self, digital_id, value, node=None):
-        return await self._run(self.protocol.turn(digital_id, value, node))

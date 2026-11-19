@@ -11,6 +11,9 @@ import html
 import re
 from html.parser import HTMLParser
 
+# default password of the web interface
+DEFAULT_PASSWORD = "0128"
+
 # An input on the inputs page: a measured value with unit, or the state of a
 # digital input. The value of a digital input is "1" (on) or "0" (off), like
 # the direct connection reports it.
@@ -237,6 +240,13 @@ def digital_path(digital_id, value):
     return "/580600.htm?blw91A1200{:X}={}".format(digital_id, digital_command(value))
 
 
+def base_url(ip):
+    """The URL the paths of the requests are relative to"""
+    if not ip.startswith("http://") and not ip.startswith("https://"):
+        ip = "http://" + ip
+    return ip
+
+
 def probe():
     """Flow: whether a BL-NET answers"""
     try:
@@ -244,6 +254,12 @@ def probe():
     except TransportError:
         return False
     return is_blnet_page(response.text)
+
+
+def check(url):
+    """Flow: raise ValueError if no BL-NET answers at url"""
+    if not (yield from probe()):
+        raise ValueError("No BLNET found under given address: {}".format(url))
 
 
 class Protocol:
@@ -378,3 +394,117 @@ class Protocol:
             return True
 
         return (yield from self._logged_in_session(turn()))
+
+
+class ClientBase:
+    """
+    Interface for connecting with, collecting data from and controlling the BLNet
+    via it's HTTP-interface, without the I/O. The methods run flows with
+    self._run, see pyblnet.protocol.flow.
+    Attributes:
+        ip         the ip/domain of the BL-Net to connect to
+        password   the password to log into the web interface provided
+        timeout    timeout for http requests
+    """
+
+    def __init__(self, ip, password=DEFAULT_PASSWORD, timeout=5):
+        assert isinstance(ip, str)
+        assert password is None or isinstance(password, str)
+        assert timeout is None or isinstance(timeout, int)
+        self.ip = base_url(ip)
+        self._timeout = timeout
+        self.protocol = Protocol(password)
+
+    @property
+    def password(self):
+        return self.protocol.password
+
+    @property
+    def current_taid(self):
+        """TAID cookie in the form 'TAID="EEEE"'"""
+        return self.protocol.current_taid
+
+    def cookie_header(self):
+        """
+        Creates the header to pass the session TAID as cookie
+        """
+        return {"Cookie": self.current_taid}
+
+    def _check(self):
+        """Raise ValueError if no BL-NET answers at self.ip"""
+        return self._run(check(self.ip))
+
+    def logged_in(self):
+        """
+        Determines whether the object is still connected to the BLNET
+        / Logged into the web interface
+        """
+        return self._run(self.protocol.logged_in())
+
+    def log_in(self):
+        """
+        Logs into the BLNET interface, renews the TAID
+
+        Return: Login successful
+        """
+        return self._run(self.protocol.log_in())
+
+    def log_out(self):
+        """
+        Logs out of the BLNET interface
+
+        Return: successful log out
+        """
+        return self._run(self.protocol.log_out())
+
+    def set_node(self, node):
+        """
+        Selects the node at which the UVR of interest lies
+        future requests will be sent at this particular UVR
+
+        Return: Still logged in (indicating successful node change)
+        """
+        return self._run(self.protocol.set_node(node))
+
+    def read_analog_values(self):
+        """
+        Reads all analog values (temperatures, speeds) from the web interface
+        and returns list of quadruples of id, name, value, unit of measurement
+        """
+        return self._run(self.protocol.read_analog_values())
+
+    def read_digital_values(self):
+        """
+        Reads all digital values (switches) from the web interface
+        and returns list of quadruples of id, name, mode (AUTO/HAND), value
+        (EIN/AUS)
+        """
+        return self._run(self.protocol.read_digital_values())
+
+    def set_digital_value(self, digital_id, value):
+        """
+        Sets a digital value with given id to given value
+        Accepts 'EIN' and everything evaluating to True
+        as well as 'AUS' and everything evaluating to False
+        and 'AUTO' as values
+        Attributes:
+            id       id of the device whichs state should be changed
+            value    value to change the state to
+        Return: still logged in (indicating successful set)
+        """
+        return self._run(self.protocol.set_digital_value(digital_id, value))
+
+    def fetch(self, node=None):
+        """
+        Log in, select the node if given, read the analog and digital values
+        and log out. Returns both lists, see read_analog_values and
+        read_digital_values.
+        """
+        return self._run(self.protocol.fetch(node))
+
+    def turn(self, digital_id, value, node=None):
+        """
+        Set a digital value in a session of its own, raises ConnectionError
+        if it fails
+        """
+        return self._run(self.protocol.turn(digital_id, value, node))

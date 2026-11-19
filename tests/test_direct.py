@@ -151,12 +151,12 @@ class BLNETDirectOnlyTest(unittest.TestCase):
         client = direct.Client(ADDRESS, self.port, timeout=1)
         self.server.close_on = READ_DATA
         with self.assertRaises(ConnectionError):
-            client._get_data(1)
+            client.get_data(1)
 
     def test_read_logged_data_raises_on_invalid_reply(self):
         client = direct.Client(ADDRESS, self.port, timeout=1)
         with self.assertRaises(ConnectionError):
-            client._get_data(1)
+            client.get_data(1)
 
     def test_fetch_waits_while_blnet_has_no_new_data(self):
         # Real BL-NETs answer "no data" for up to a few seconds after a read

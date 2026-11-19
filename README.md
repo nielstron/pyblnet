@@ -64,7 +64,7 @@ blnet = direct.Client(ip)
 # Fetching the latest data
 print(blnet.get_latest())
 # Still inofficial because unexplicably failing often
-print(blnet._get_data(1))
+print(blnet.get_data(1))
 ```
 
 

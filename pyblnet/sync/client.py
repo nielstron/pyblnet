@@ -3,25 +3,20 @@
 """
 Created on 13.08.2018
 
-General high-level BLNET interface.
+General high-level BLNET interface, blocking. The API is in
+pyblnet.protocol.client.ClientBase.
 
-Abstracts from actual type of connection to the BLNET and provides as much functionality
-as possible.
-
-@author: Niels
+@author: Nielstron
 """
-from ..protocol.values import add_direct, add_web, convert_web, empty_data, find_value
+from ..protocol.client import ClientBase, direct_host, web_address
+from ..protocol.flow import SyncRunner
 from . import direct, web
 
-from urllib.parse import urlparse
 
-
-class Client(object):
+class Client(SyncRunner, ClientBase):
     """
-    General high-level BLNET interface.
-
-    Abstracts from actual type of connection to the BLNET and provides as much functionality
-    as possible.
+    Read and control the BL-NET via the web interface and/or the direct
+    connection, see pyblnet.protocol.client.ClientBase for its methods.
     Attributes:
     address      ip address of the BLNET
     web_port     port of the HTTP interface
@@ -47,8 +42,6 @@ class Client(object):
         """
         If a connection (Web or TA/Direct) should not be used,
         set the corresponding use_* to False
-        Params:
-        @param ta_port: Port for direct TCP Connection
         """
         assert isinstance(address, str)
         assert web_port is None or isinstance(web_port, int)
@@ -56,106 +49,8 @@ class Client(object):
         assert timeout is None or isinstance(timeout, int)
         self.address = address
         self.timeout = timeout
-        self.max_retries = max_retries
-        self.web = None
-        self.direct = None
-        if use_web:
-            self.web = web.Client(
-                "{}:{}".format(address, web_port), password, timeout
-            )
-        if use_ta:
-            # The address might not have a resulting hostname
-            # especially not if not prefixed with http://
-            # see https://docs.python.org/3/library/urllib.parse.html#urllib.parse.urlparse
-            host = urlparse(address).hostname or address
-            self.direct = direct.Client(host, ta_port, timeout=timeout)
-
-    def fetch(self, node=None):
-        """
-        Fetch all available data about selected node
-        (defaults to active node on the device)
-        """
-        data = empty_data()
-        if self.web:
-            add_web(data, *self.web.fetch(node))
-        if self.direct:
-            add_direct(
-                data, self.direct.get_latest(self.max_retries)[0], self.web is not None
-            )
-        return data
-
-    def turn_on(self, digital_id, can_node=None):
-        """
-        Turn switch with given id on given node on
-        Return: no error during set operation
-        """
-        return self._turn(digital_id, "EIN", can_node)
-
-    def turn_off(self, digital_id, can_node=None):
-        """
-        Turn switch with given id on given node off
-        Return: no error during set operation
-        """
-        return self._turn(digital_id, "AUS", can_node)
-
-    def turn_auto(self, digital_id, can_node=None):
-        """
-        Turn switch with given id on given node to "AUTO"/ give control over to UVR
-        Return: no error during set operation
-        """
-        return self._turn(digital_id, "AUTO", can_node)
-
-    def _turn(self, digital_id, value, can_node=None):
-        if self.web:
-            return self.web.turn(digital_id, value, can_node)
-        else:
-            raise EnvironmentError("Can't set values with blnet web disabled")
-
-    def get_value(self, name=None, id=None, type="digital", ret="value", cached=None):
-        """
-        higher level interface to get a value or mode by name or id
-        ret: can be 'value', 'mode'
-        returns the value  if ret='value' or the mode if ret='mode' as first return value
-                and the dictionary containing name, value, id and mode as a second return value
-        cached: in order to prevent polling data from BLNet with every call,
-                the data can be fetched once and stored and passed to this function
-
-
-        """
-        if name is None and id is None:
-            return None
-        if cached is None:
-            cached = self.fetch()
-        return (*find_value(cached, name, id, type, ret), cached)
-
-    def get_digital_value(self, name=None, id=None, cached=None):
-        return self.get_value(
-            type="digital", ret="value", name=name, id=id, cached=cached
+        super().__init__(
+            web.Client(web_address(address, web_port), password, timeout) if use_web else None,
+            direct.Client(direct_host(address), ta_port, timeout=timeout) if use_ta else None,
+            max_retries,
         )
-
-    def get_digital_mode(self, name=None, id=None, cached=None):
-        return self.get_value(
-            type="digital", ret="mode", name=name, id=id, cached=cached
-        )
-
-    def get_analog_value(self, name=None, id=None, cached=None):
-        return self.get_value(
-            type="analog", ret="value", name=name, id=id, cached=cached
-        )
-
-    def get_energy_value(self, name=None, id=None, cached=None):
-        return self.get_value(
-            type="energy", ret="value", name=name, id=id, cached=cached
-        )
-
-    def get_speed_value(self, name=None, id=None, cached=None):
-        return self.get_value(
-            type="speed", ret="value", name=name, id=id, cached=cached
-        )
-
-    def get_power_value(self, name=None, id=None, cached=None):
-        return self.get_value(
-            type="power", ret="value", name=name, id=id, cached=cached
-        )
-
-    _convert_web = staticmethod(convert_web)

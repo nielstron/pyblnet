@@ -91,6 +91,14 @@ class AsyncWebTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(entry, STATE["analog"][2])
         self.assertEqual(value, STATE["analog"][2]["value"])
 
+    async def test_value_helpers_like_blocking_client(self):
+        blnet = await aio.Client.create(ADDRESS, session=self.session, **self.blnet_kwargs())
+        self.assertEqual(
+            await blnet.get_digital_mode(id=1, cached=STATE),
+            Client(ADDRESS, **self.blnet_kwargs()).get_digital_mode(id=1, cached=STATE),
+        )
+        self.assertEqual((await blnet.get_analog_value(id=5))[0], STATE["analog"][5]["value"])
+
     async def test_turn(self):
         blnet = await aio.Client.create(ADDRESS, session=self.session, **self.blnet_kwargs())
         await blnet.turn_on(10)

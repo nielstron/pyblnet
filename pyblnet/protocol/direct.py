@@ -37,7 +37,7 @@ WAIT_SIZE = 3
 DATASET_SIZE = 61
 LATEST_SIZE = 56
 
-# Errors of malformed replies, raised as ConnectionError by the clients
+# Errors of malformed replies, raised as ConnectionError
 INVALID_REPLY_ERRORS = (struct.error, IndexError, ValueError)
 
 
@@ -100,6 +100,30 @@ class Protocol:
         self.connected = False
         self.count = None
         self.address = None
+
+    def guarded(self, flow):
+        """
+        Flow: run flow. If it fails, close the connection and forget the
+        read state, so that the next flow starts afresh. Malformed replies
+        are raised as ConnectionError.
+        """
+        try:
+            return (yield from flow)
+        except GeneratorExit:
+            # the flow is abandoned, no more operations possible
+            raise
+        except INVALID_REPLY_ERRORS as ex:
+            yield from self._reset()
+            raise ConnectionError(f"Invalid reply from BL-Net: {ex}") from ex
+        except BaseException:
+            yield from self._reset()
+            raise
+
+    def _reset(self):
+        if self.connected:
+            self.connected = False
+            yield Disconnect()
+        self.forget()
 
     def _connect(self):
         if not self.connected:
@@ -364,3 +388,57 @@ class Protocol:
             frames[0] = Parser(data[1 : LATEST_SIZE + 1])
             frames[1] = Parser(data[LATEST_SIZE + 1 : 2 * LATEST_SIZE + 1])
         return {k: v.to_dict() for k, v in frames.items()}
+
+
+class ClientBase:
+    """
+    A direct connection to the BLNET (rather than scraping the web
+    interface), without the I/O. The methods run flows with self._run, see
+    pyblnet.protocol.flow.
+
+    It uses this protocol and is still very buggy
+    www.haus-terra.at/heizung/download/Schnittstelle/Schnittstelle_PC_Bootloader.pdf
+    """
+
+    def __init__(self, address, port: int = 40000, reset: bool = False, timeout: float = 60):
+        """
+        :param address: string, Address of the BL-Net device
+        :param port: integer, Port of the bl-net device for connection
+        :param reset: boolean, delete data on BL-Net after data receive
+        :param timeout: float, timeout in seconds for the connection
+        """
+        assert isinstance(address, str)
+        assert isinstance(port, int)
+        assert isinstance(reset, bool)
+        self.address = address
+        self.port = port
+        self.reset = reset
+        # 0 would make the socket non-blocking, treat it like None (no timeout)
+        self._timeout = timeout or None
+        self.protocol = Protocol(reset)
+
+    def check_mode(self):
+        """
+        Check if Bootloader Mode is supported
+        @throws ConnectionError Mode not supported
+        """
+        return self._run(self.protocol.guarded(self.protocol.check_mode()))
+
+    def get_count(self):
+        """
+        Get the number of datasets in the bootloader memory
+        @return number of datasets in bootloader memory
+        """
+        return self._run(self.protocol.guarded(self.protocol.get_count()))
+
+    def get_data(self, max_count=None):
+        """The datasets logged in the bootloader memory, up to max_count"""
+        return self._run(self.protocol.guarded(self.protocol.get_data(max_count)))
+
+    def get_latest(self, max_retries=MAX_RETRYS):
+        """
+        Fetch latest (current) data from the BLNet
+        @throws ConnectionError could not get data from BLNet
+        @return Array of frame -> value mappings
+        """
+        return self._run(self.protocol.guarded(self.protocol.get_latest(max_retries)))

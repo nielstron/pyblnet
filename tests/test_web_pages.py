@@ -17,6 +17,19 @@ def page(name):
     return mock.Mock(text=(PAGES / name).read_bytes().decode("latin-1"))
 
 
+def _direct_client_returning(latest):
+    """A direct client whose get_latest flow returns latest without I/O"""
+
+    def get_latest(max_retries):
+        return latest
+        yield  # a flow
+
+    client = mock.Mock()
+    client.protocol.get_latest = get_latest
+    client.protocol.guarded = lambda flow: flow
+    return client
+
+
 def serve(name):
     return mock.patch("pyblnet.sync.web.requests.get", return_value=page(name))
 
@@ -101,7 +114,7 @@ class WebPagesTest(unittest.TestCase):
         direct = Parser(struct.pack("<16H", *inputs) + bytes(55 - 32)).to_dict()
         with serve("main.htm"):
             blnet = Client("blnet")
-        blnet.direct = mock.Mock(get_latest=mock.Mock(return_value={0: direct}))
+        blnet.direct = _direct_client_returning({0: direct})
         with serve("580500.digital_inputs.htm"), mock.patch.object(
             web.Client, "read_digital_values", return_value=[]
         ):
