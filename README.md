@@ -1,7 +1,7 @@
 # PyBLNET - a very basic python BL-NET bridge
 [![PyPI - Version](https://img.shields.io/pypi/v/pyblnet)](https://pypi.org/project/PyBLNET/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pyblnet)](https://pypi.org/project/PyBLNET/)
-[![Build status](https://github.com/nielstron/pyblnet/actions/workflows/build.yml/badge.svg)](https://github.com/nielstron/pyblnet/actions/workflows/build.yml)
+[![Build status](https://github.com/PyBLNET/pyblnet/actions/workflows/build.yml/badge.svg)](https://github.com/PyBLNET/pyblnet/actions/workflows/build.yml)
 [![Coverage Status](https://coveralls.io/repos/github/PyBLNET/pyblnet/badge.svg?branch=master)](https://coveralls.io/github/PyBLNET/pyblnet?branch=master)
 
 A package that connects to the BL-NET that is connected itself to a UVR1611 device by Technische Alternative. 
