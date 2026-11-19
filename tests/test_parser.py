@@ -1,5 +1,5 @@
 import struct
-from pyblnet.blnet_parser import BLNETParser
+from pyblnet.protocol.parser import BLNETParser
 import unittest
 
 

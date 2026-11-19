@@ -99,7 +99,7 @@ class BLNETDirectOnlyTest(unittest.TestCase):
             (socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP, "", ("127.0.0.1", port))
             for port in (refused_port, self.port)
         ]
-        with mock.patch("pyblnet.blnet_conn.getaddrinfo", return_value=addresses):
+        with mock.patch("pyblnet.sync.direct.getaddrinfo", return_value=addresses):
             with warnings.catch_warnings(record=True) as caught:
                 warnings.simplefilter("always", ResourceWarning)
                 BLNETDirect(ADDRESS, self.port, timeout=7)

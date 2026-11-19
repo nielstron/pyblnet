@@ -1,7 +1,7 @@
 """
 The direct connection (TA port, PC-BLNET protocol) of the BL-NET without
 I/O: the commands, how to read their replies, and the reads as flows (see
-flow.py). BLNETDirect runs them with a socket, pyblnet.aio.BLNETDirect with
+flow.py). pyblnet.sync.BLNETDirect runs them with a socket, pyblnet.aio.BLNETDirect with
 asyncio streams.
 
 This is basically a python port of a script by berwinter
@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from datetime import datetime
 import struct
 
-from .blnet_parser import BLNETParser
+from .parser import BLNETParser
 
 # Constants for the UVR Communication
 CAN_MODE = b"\xDC"

@@ -4,7 +4,7 @@
 Created on 26.09.2017
 
 A module for connecting with, collecting data from and controlling the BLNet
-via it's HTTP-interface. The protocol is in web_protocol.py, this module
+via it's HTTP-interface. The protocol is in pyblnet.protocol.web, this module
 runs it with requests.
 
 @author: Nielstron
@@ -12,22 +12,12 @@ runs it with requests.
 
 import requests
 
-from .flow import run_sync
-from .web_protocol import (  # noqa: F401, the parsers used to live here
-    DIGITAL_INPUT_STATES,
-    INPUT_PATTERN,
-    MIXER_OUTPUT_PATTERN,
-    Response,
-    TransportError,
-    WebSession,
-    _element_text,
-    _element_texts,
-    probe,
-)
+from ..protocol.flow import run_sync
+from ..protocol.web import Response, TransportError, WebSession, probe
 
 
 def _performer(base_url, timeout):
-    """Perform the requests of web_protocol flows on base_url with requests"""
+    """Perform the requests of the pyblnet.protocol.web flows on base_url with requests"""
 
     def perform(request):
         url = base_url + request.path

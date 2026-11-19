@@ -4,27 +4,16 @@
 Created on 09.08.2018
 
 The direct connection to the BL-NET over a socket. The protocol is in
-direct_protocol.py, this module runs it.
+pyblnet.protocol.direct, this module runs it.
 
 @author: Niels
 """
 from socket import socket, getaddrinfo, SOCK_STREAM, IPPROTO_TCP
 from time import sleep
 
-from .direct_protocol import (  # noqa: F401, the constants used to live here
-    CAN_MODE,
-    DL_MODE,
-    DL2_MODE,
-    END_READ,
-    GET_HEADER,
-    GET_LATEST,
-    GET_MODE,
+from ..protocol.direct import (
     INVALID_REPLY_ERRORS,
     MAX_RETRYS,
-    NO_DATA_WAIT,
-    READ_DATA,
-    RESET_DATA,
-    WAIT_TIME,
     Connect,
     DirectProtocol,
     Disconnect,
@@ -32,7 +21,7 @@ from .direct_protocol import (  # noqa: F401, the constants used to live here
     Send,
     Sleep,
 )
-from .flow import run_sync
+from ..protocol.flow import run_sync
 
 
 class BLNETDirect(object):

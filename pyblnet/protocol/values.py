@@ -3,7 +3,7 @@ Combine what the web interface and the direct connection read into the data
 BLNET.fetch returns, and look values up in it. Shared by pyblnet.BLNET and
 pyblnet.aio.BLNET.
 """
-from .blnet_parser import ANALOG_UNITS
+from .parser import ANALOG_UNITS
 
 # Units of the values only available via BLNETDirect, speed is a level 0-30
 UNITS = {"speed": None, "energy": "kWh", "power": "kW"}

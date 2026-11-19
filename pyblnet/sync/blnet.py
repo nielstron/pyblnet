@@ -10,17 +10,9 @@ as possible.
 
 @author: Niels
 """
-from .blnet_web import BLNETWeb
-from .blnet_conn import BLNETDirect
-from .values import (  # noqa: F401, the constants used to live here
-    UNITS,
-    WEB_UNIT_TYPES,
-    add_direct,
-    add_web,
-    convert_web,
-    empty_data,
-    find_value,
-)
+from ..protocol.values import add_direct, add_web, convert_web, empty_data, find_value
+from .direct import BLNETDirect
+from .web import BLNETWeb
 
 from urllib.parse import urlparse
 

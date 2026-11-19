@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest import mock
 
 from pyblnet import BLNET, BLNETWeb, blnet_test
-from pyblnet.blnet_parser import BLNETParser
+from pyblnet.protocol.parser import BLNETParser
 
 PAGES = Path(__file__).parent / "test_structure"
 
@@ -17,7 +17,7 @@ def page(name):
 
 
 def serve(name):
-    return mock.patch("pyblnet.blnet_web.requests.get", return_value=page(name))
+    return mock.patch("pyblnet.sync.web.requests.get", return_value=page(name))
 
 
 class BLNETWebPagesTest(unittest.TestCase):

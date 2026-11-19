@@ -1,7 +1,7 @@
 """
 The web interface of the BL-NET without I/O: parsing its pages, and the
 requests to log in, read values and set outputs as flows (see flow.py).
-BLNETWeb runs them with requests, pyblnet.aio.BLNETWeb with aiohttp.
+pyblnet.sync.BLNETWeb runs them with requests, pyblnet.aio.BLNETWeb with aiohttp.
 """
 from __future__ import annotations
 
