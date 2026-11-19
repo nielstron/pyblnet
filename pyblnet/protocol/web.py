@@ -11,6 +11,8 @@ import html
 import re
 from html.parser import HTMLParser
 
+from .flow import Creatable
+
 # default password of the web interface
 DEFAULT_PASSWORD = "0128"
 
@@ -396,18 +398,20 @@ class Protocol:
         return (yield from self._logged_in_session(turn()))
 
 
-class ClientBase:
+class ClientBase(Creatable):
     """
     Interface for connecting with, collecting data from and controlling the BLNet
     via it's HTTP-interface, without the I/O. The methods run flows with
-    self._run, see pyblnet.protocol.flow.
+    self._run, see pyblnet.protocol.flow. Make clients with create(), which
+    raises ValueError if no BL-NET answers under ip.
     Attributes:
         ip         the ip/domain of the BL-Net to connect to
         password   the password to log into the web interface provided
         timeout    timeout for http requests
     """
 
-    def __init__(self, ip, password=DEFAULT_PASSWORD, timeout=5):
+    def __init__(self, ip, password=DEFAULT_PASSWORD, timeout=5, *, _factory=None):
+        self._require_factory(_factory)
         assert isinstance(ip, str)
         assert password is None or isinstance(password, str)
         assert timeout is None or isinstance(timeout, int)
@@ -431,8 +435,8 @@ class ClientBase:
         return {"Cookie": self.current_taid}
 
     def _check(self):
-        """Raise ValueError if no BL-NET answers at self.ip"""
-        return self._run(check(self.ip))
+        """Flow: raise ValueError if no BL-NET answers at self.ip"""
+        yield from check(self.ip)
 
     def logged_in(self):
         """

@@ -41,20 +41,13 @@ async def blnet_test(session, ip, timeout=5):
 class Client(AsyncRunner, ClientBase):
     """
     The web interface of the BL-NET, see pyblnet.protocol.web.ClientBase for
-    its methods, which are awaitable here. The constructor doesn't check the
-    address, use create(). Use it in an async with statement to log in and out.
+    its methods, which are awaitable here. Make it with await create(ip,
+    session, ...). Use it in an async with statement to log in and out.
     """
 
-    def __init__(self, ip, session, password=DEFAULT_PASSWORD, timeout=5):
-        super().__init__(ip, password, timeout)
+    def __init__(self, ip, session, password=DEFAULT_PASSWORD, timeout=5, *, _factory=None):
+        super().__init__(ip, password, timeout, _factory=_factory)
         self._perform = _performer(session, self.ip, timeout)
-
-    @classmethod
-    async def create(cls, ip, session, password=DEFAULT_PASSWORD, timeout=5):
-        """Raises ValueError if no BL-NET answers under ip"""
-        client = cls(ip, session, password, timeout)
-        await client._check()
-        return client
 
     async def __aenter__(self):
         await self.log_in()

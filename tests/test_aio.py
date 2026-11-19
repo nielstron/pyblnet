@@ -75,13 +75,13 @@ class AsyncWebTest(unittest.IsolatedAsyncioTestCase):
         blnet = await aio.Client.create(ADDRESS, session=self.session, **self.blnet_kwargs())
         fetched = await blnet.fetch()
         self.assertEqual(fetched, STATE)
-        blocking = await asyncio.to_thread(lambda: Client(ADDRESS, **self.blnet_kwargs()).fetch())
+        blocking = await asyncio.to_thread(lambda: Client.create(ADDRESS, **self.blnet_kwargs()).fetch())
         self.assertEqual(fetched, blocking)
 
     async def test_fetch_access_denied_like_blocking_client(self):
         blnet = await aio.Client.create(ADDRESS, session=self.session, **self.blnet_kwargs(None))
         blocking = await asyncio.to_thread(
-            lambda: Client(ADDRESS, **self.blnet_kwargs(None)).fetch()
+            lambda: Client.create(ADDRESS, **self.blnet_kwargs(None)).fetch()
         )
         self.assertEqual(await blnet.fetch(), blocking)
 
@@ -95,7 +95,7 @@ class AsyncWebTest(unittest.IsolatedAsyncioTestCase):
         blnet = await aio.Client.create(ADDRESS, session=self.session, **self.blnet_kwargs())
         self.assertEqual(
             await blnet.get_digital_mode(id=1, cached=STATE),
-            Client(ADDRESS, **self.blnet_kwargs()).get_digital_mode(id=1, cached=STATE),
+            Client.create(ADDRESS, **self.blnet_kwargs()).get_digital_mode(id=1, cached=STATE),
         )
         self.assertEqual((await blnet.get_analog_value(id=5))[0], STATE["analog"][5]["value"])
 
@@ -145,7 +145,7 @@ class AsyncDirectTest(unittest.IsolatedAsyncioTestCase):
             {"value": 53.9, "type": "temperature", "unit_of_measurement": "°C"},
         )
         self.assertEqual(fetched["speed"][1], {"value": 24, "unit_of_measurement": None})
-        blocking = await asyncio.to_thread(lambda: Client(ADDRESS, **self.kwargs()).fetch())
+        blocking = await asyncio.to_thread(lambda: Client.create(ADDRESS, **self.kwargs()).fetch())
         self.assertEqual(fetched, blocking)
 
     async def test_fetch_succeeds_on_last_retry(self):

@@ -37,7 +37,7 @@ def serve(name):
 class WebPagesTest(unittest.TestCase):
     def setUp(self):
         with serve("main.htm"):
-            self.web = web.Client("blnet", password=None)
+            self.web = web.Client.create("blnet", password=None)
 
     def test_blnet_test_recognizes_main_page(self):
         with serve("main.htm"):
@@ -97,7 +97,7 @@ class WebPagesTest(unittest.TestCase):
 
     def test_fetch_reports_digital_inputs_as_analog_inputs_of_type_digital(self):
         with serve("main.htm"):
-            blnet = Client("blnet")
+            blnet = Client.create("blnet")
         with serve("580500.digital_inputs.htm"), mock.patch.object(
             web.Client, "read_digital_values", return_value=[]
         ):
@@ -113,7 +113,7 @@ class WebPagesTest(unittest.TestCase):
         inputs = [0x208F] + [0x2000] * 11 + [0x0001, 0x0001] + [0x2000] * 2
         direct = Parser(struct.pack("<16H", *inputs) + bytes(55 - 32)).to_dict()
         with serve("main.htm"):
-            blnet = Client("blnet")
+            blnet = Client.create("blnet")
         blnet.direct = _direct_client_returning({0: direct})
         with serve("580500.digital_inputs.htm"), mock.patch.object(
             web.Client, "read_digital_values", return_value=[]

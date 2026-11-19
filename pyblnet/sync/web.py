@@ -46,14 +46,13 @@ def blnet_test(ip, timeout=5):
 class Client(SyncRunner, ClientBase):
     """
     The web interface of the BL-NET, see pyblnet.protocol.web.ClientBase for
-    its methods. Raises ValueError if no BL-NET answers under ip.
-    Use it in a with statement to log in and out.
+    its methods. Make it with create(). Use it in a with statement to log in
+    and out.
     """
 
-    def __init__(self, ip, password=DEFAULT_PASSWORD, timeout=5):
-        super().__init__(ip, password, timeout)
+    def __init__(self, ip, password=DEFAULT_PASSWORD, timeout=5, *, _factory=None):
+        super().__init__(ip, password, timeout, _factory=_factory)
         self._perform = _performer(self.ip, timeout)
-        self._check()
 
     def __enter__(self):
         self.log_in()

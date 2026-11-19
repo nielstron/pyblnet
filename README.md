@@ -16,7 +16,7 @@ Two interfaces to BLNet exist and both are supported:
 However, as of now, there is no testing on the BLNet-Direct protocol *of any kind*, so enabling it is discouraged until the interface is fixed.
 Parsing the data via the web interface is the preferred way of accessing the BLNet for now.
 
-The class Client is a wrapper around the two classes. When initializing the class, the two interfaces can be activated/deactivated. 
+The class Client is a wrapper around the two classes. When creating it, the two interfaces can be activated/deactivated. 
 The direct connection provides 'analog', 'digital',  'speed', 'energy', 'power', whereas the web interface supports 'analog' and 'digital' only.
 If both are active, the direct connection has priority.
 Setting switches and reading their manual/auto state is only possible via the web interface.
@@ -32,8 +32,9 @@ ip = '192.168.178.10'
 # Check if there is a blnet at given address
 blnet_test(ip)  # -> True/False
 
-# Convenient high level interface
-blnet = Client(ip, password='pass', timeout=5)
+# Convenient high level interface, the clients are made with create(),
+# which checks the BL-NET
+blnet = Client.create(ip, password='pass', timeout=5)
 
 # Control a switch by its ID
 blnet.turn_on(10)
@@ -49,7 +50,7 @@ print(blnet.fetch())
 # Fetch the latest data via web interface
 # Note that manual log in and log out are required
 # when not using the with statement
-with web.Client(ip, password='pass', timeout=5) as blnet_session:
+with web.Client.create(ip, password='pass', timeout=5) as blnet_session:
     print(blnet_session.read_analog_values())
     print(blnet_session.read_digital_values())
 
@@ -60,7 +61,7 @@ with web.Client(ip, password='pass', timeout=5) as blnet_session:
     # this is handled automatically when using the with statement
 
 # Fetch data via the Protocol developed by TA
-blnet = direct.Client(ip)
+blnet = direct.Client.create(ip)
 # Fetching the latest data
 print(blnet.get_latest())
 # Still inofficial because unexplicably failing often
@@ -72,7 +73,7 @@ print(blnet.get_data(1))
 
 `pyblnet.aio` has the same classes with awaitable methods, for asyncio applications like Home Assistant.
 It needs `aiohttp`: `pip install pyblnet[async]`.
-The constructors don't connect, use `create()` to connect and check the BL-NET.
+Like the blocking ones, they are made with `create()`, which checks the BL-NET.
 
 ```python
 import asyncio

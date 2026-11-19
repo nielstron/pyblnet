@@ -18,14 +18,12 @@ from ..protocol.flow import SyncRunner
 class Client(SyncRunner, ClientBase):
     """
     The direct connection (TA port) of the BL-NET over a socket, see
-    pyblnet.protocol.direct.ClientBase for its methods. Raises
-    ConnectionError if the BL-NET mode is not supported.
+    pyblnet.protocol.direct.ClientBase for its methods. Make it with create().
     """
 
-    def __init__(self, address, port: int = 40000, reset: bool = False, timeout: float = 60):
-        super().__init__(address, port, reset, timeout)
+    def __init__(self, address, port=40000, reset=False, timeout=60, *, _factory=None):
+        super().__init__(address, port, reset, timeout, _factory=_factory)
         self._socket = None
-        self.check_mode()
 
     def _perform(self, operation):
         if isinstance(operation, Send):

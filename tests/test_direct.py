@@ -36,7 +36,7 @@ class BLNETDirectOnlyTest(unittest.TestCase):
         self.server.server_close()
 
     def blnet(self, max_retries=5, timeout=5):
-        return Client(
+        return Client.create(
             ADDRESS,
             ta_port=self.port,
             timeout=timeout,
@@ -87,7 +87,7 @@ class BLNETDirectOnlyTest(unittest.TestCase):
         self.assertEqual(data["energy"][1]["value"], 362847.4)
 
     def test_timeout_does_not_change_global_socket_timeout(self):
-        direct.Client(ADDRESS, self.port, timeout=7)
+        direct.Client.create(ADDRESS, self.port, timeout=7)
         self.assertIsNone(socket.getdefaulttimeout())
 
     def test_failed_connection_attempt_closes_socket(self):
@@ -103,7 +103,7 @@ class BLNETDirectOnlyTest(unittest.TestCase):
         with mock.patch("pyblnet.sync.direct.getaddrinfo", return_value=addresses):
             with warnings.catch_warnings(record=True) as caught:
                 warnings.simplefilter("always", ResourceWarning)
-                direct.Client(ADDRESS, self.port, timeout=7)
+                direct.Client.create(ADDRESS, self.port, timeout=7)
                 gc.collect()
         self.assertEqual([w for w in caught if w.category is ResourceWarning], [])
 
@@ -111,7 +111,7 @@ class BLNETDirectOnlyTest(unittest.TestCase):
         self.server.silent = True
         start = time.monotonic()
         with self.assertRaises(socket.timeout):
-            Client(ADDRESS, ta_port=self.port, timeout=1, use_web=False, use_ta=True)
+            Client.create(ADDRESS, ta_port=self.port, timeout=1, use_web=False, use_ta=True)
         self.assertLess(time.monotonic() - start, 5)
 
     def test_fetch_recovers_after_timeout(self):
@@ -143,18 +143,18 @@ class BLNETDirectOnlyTest(unittest.TestCase):
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always", ResourceWarning)
             with self.assertRaises(socket.timeout):
-                direct.Client(ADDRESS, self.port, timeout=1)
+                direct.Client.create(ADDRESS, self.port, timeout=1)
             gc.collect()
         self.assertEqual([w for w in caught if w.category is ResourceWarning], [])
 
     def test_read_logged_data_raises_when_blnet_hangs_up(self):
-        client = direct.Client(ADDRESS, self.port, timeout=1)
+        client = direct.Client.create(ADDRESS, self.port, timeout=1)
         self.server.close_on = READ_DATA
         with self.assertRaises(ConnectionError):
             client.get_data(1)
 
     def test_read_logged_data_raises_on_invalid_reply(self):
-        client = direct.Client(ADDRESS, self.port, timeout=1)
+        client = direct.Client.create(ADDRESS, self.port, timeout=1)
         with self.assertRaises(ConnectionError):
             client.get_data(1)
 

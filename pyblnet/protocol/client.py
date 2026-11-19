@@ -5,6 +5,7 @@ pyblnet.sync.Client and pyblnet.aio.Client.
 """
 from urllib.parse import urlparse
 
+from .flow import _FACTORY, Creatable
 from .values import add_direct, add_web, empty_data, find_value
 from .web import Request
 
@@ -58,22 +59,67 @@ class Protocol:
         return (*find_value(cached, name, id, type, ret), cached)
 
 
-class ClientBase:
+class ClientBase(Creatable):
     """
     General high-level BLNET interface, without the I/O.
 
     Abstracts from actual type of connection to the BLNET and provides as much functionality
     as possible. The methods run flows with self._run, see pyblnet.protocol.flow.
+    Make clients with create(), which raises ValueError if no BL-NET answers
+    at the web interface and ConnectionError if the mode of the direct
+    connection is not supported.
     Attributes:
-    web          the client of the web interface, None if not used
-    direct       the client of the direct connection, None if not used
+    address      ip address of the BLNET
+    web_port     port of the HTTP interface
+    password     password for authenticating on the HTTP interface
+    ta_port      port of the PC-BLNET interface
+    timeout      timeout for requests
     max_retries  maximum number of connection retries before aborting
+    use_web      boolean about whether to make use of the HTTP interface
+    use_ta       boolean about whether to make use of the (buggy) PC-BLNET interface
+    The clients of the interfaces are in web and direct, None if not used.
     """
 
-    def __init__(self, web=None, direct=None, max_retries=5):
-        self.web = web
-        self.direct = direct
+    def __init__(
+        self,
+        address,
+        web_port=80,
+        password=None,
+        ta_port=40000,
+        timeout=5,
+        max_retries=5,
+        use_web=True,
+        use_ta=False,
+        *,
+        _factory=None,
+    ):
+        self._require_factory(_factory)
+        assert isinstance(address, str)
+        assert web_port is None or isinstance(web_port, int)
+        assert ta_port is None or isinstance(ta_port, int)
+        assert timeout is None or isinstance(timeout, int)
+        self.address = address
+        self.timeout = timeout
         self.max_retries = max_retries
+        self.web = None
+        self.direct = None
+        if use_web:
+            self.web = self._new_web_client(web_address(address, web_port), password, timeout)
+        if use_ta:
+            self.direct = self._direct_client_class(
+                direct_host(address), ta_port, timeout=timeout, _factory=_factory
+            )
+
+    def _new_web_client(self, ip, password, timeout):
+        """The client of the web interface, not checked yet"""
+        raise NotImplementedError
+
+    def _check(self):
+        """Flow: check the BL-NET via the interfaces used"""
+        if self.web:
+            yield from self.web._check()
+        if self.direct:
+            yield from self.direct._check()
 
     @property
     def protocol(self):

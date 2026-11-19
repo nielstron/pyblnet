@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from datetime import datetime
 import struct
 
+from .flow import Creatable
 from .parser import Parser
 
 # Constants for the UVR Communication
@@ -390,23 +391,27 @@ class Protocol:
         return {k: v.to_dict() for k, v in frames.items()}
 
 
-class ClientBase:
+class ClientBase(Creatable):
     """
     A direct connection to the BLNET (rather than scraping the web
     interface), without the I/O. The methods run flows with self._run, see
-    pyblnet.protocol.flow.
+    pyblnet.protocol.flow. Make clients with create(), which raises
+    ConnectionError if the BL-NET mode is not supported.
 
     It uses this protocol and is still very buggy
     www.haus-terra.at/heizung/download/Schnittstelle/Schnittstelle_PC_Bootloader.pdf
     """
 
-    def __init__(self, address, port: int = 40000, reset: bool = False, timeout: float = 60):
+    def __init__(
+        self, address, port: int = 40000, reset: bool = False, timeout: float = 60, *, _factory=None
+    ):
         """
         :param address: string, Address of the BL-Net device
         :param port: integer, Port of the bl-net device for connection
         :param reset: boolean, delete data on BL-Net after data receive
         :param timeout: float, timeout in seconds for the connection
         """
+        self._require_factory(_factory)
         assert isinstance(address, str)
         assert isinstance(port, int)
         assert isinstance(reset, bool)
@@ -417,12 +422,9 @@ class ClientBase:
         self._timeout = timeout or None
         self.protocol = Protocol(reset)
 
-    def check_mode(self):
-        """
-        Check if Bootloader Mode is supported
-        @throws ConnectionError Mode not supported
-        """
-        return self._run(self.protocol.guarded(self.protocol.check_mode()))
+    def _check(self):
+        """Flow: raise ConnectionError if the bootloader mode is not supported"""
+        yield from self.protocol.guarded(self.protocol.check_mode())
 
     def get_count(self):
         """

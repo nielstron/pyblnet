@@ -1,8 +1,7 @@
 """
-Async clients for the BL-NET, with the API of the blocking ones, but
-awaitable methods and no I/O in the constructors: use the create()
-class methods to connect and check the BL-NET like the constructors of
-pyblnet.sync.Client, web.Client and direct.Client do.
+Async clients for the BL-NET, with the API of the blocking ones in
+pyblnet.sync, but awaitable methods. Like those, they are made with
+create(), which checks the BL-NET.
 
 Needs aiohttp: pip install pyblnet[async]
 

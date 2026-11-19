@@ -57,3 +57,30 @@ class AsyncRunner:
 
     async def _run(self, flow):
         return await run_async(flow, self._perform)
+
+
+# Passed by Creatable.create to the constructors, which refuse to run without it
+_FACTORY = object()
+
+
+class Creatable:
+    """
+    Clients are only made by create(), which checks the BL-NET with the flow
+    of self._check(), so that there is no client of a BL-NET that is missing
+    or not supported. Like the other methods, create() returns the client
+    with SyncRunner, and an awaitable of it with AsyncRunner.
+    """
+
+    @classmethod
+    def create(cls, *args, **kwargs):
+        client = cls(*args, _factory=_FACTORY, **kwargs)
+        return client._run(client._checked())
+
+    def _checked(self):
+        yield from self._check()
+        return self
+
+    @staticmethod
+    def _require_factory(factory):
+        if factory is not _FACTORY:
+            raise TypeError("Use create() to make a client")
