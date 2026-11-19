@@ -12,15 +12,17 @@ as possible.
 """
 from .blnet_web import BLNETWeb
 from .blnet_conn import BLNETDirect
-from .blnet_parser import ANALOG_UNITS
+from .values import (  # noqa: F401, the constants used to live here
+    UNITS,
+    WEB_UNIT_TYPES,
+    add_direct,
+    add_web,
+    convert_web,
+    empty_data,
+    find_value,
+)
 
 from urllib.parse import urlparse
-
-
-# Units of the values only available via BLNETDirect, speed is a level 0-30
-UNITS = {"speed": None, "energy": "kWh", "power": "kW"}
-# Analog input type for the units shown by the web interface
-WEB_UNIT_TYPES = {unit: input_type for input_type, unit in ANALOG_UNITS.items() if unit is not None}
 
 
 class BLNET(object):
@@ -82,47 +84,13 @@ class BLNET(object):
         Fetch all available data about selected node
         (defaults to active node on the device)
         """
-        data = {
-            "analog": {},
-            "digital": {},
-            "speed": {},
-            "energy": {},
-            "power": {},
-        }
+        data = empty_data()
         if self.blnet_web:
-            with self.blnet_web as blnet_session:
-                if node is not None:
-                    blnet_session.set_node(node)
-                data["analog"] = self._convert_web(blnet_session.read_analog_values())
-                data["digital"] = self._convert_web(blnet_session.read_digital_values())
-            for entry in data["analog"].values():
-                # digital inputs come with their type, others by their unit
-                entry.setdefault("type", WEB_UNIT_TYPES.get(entry.get("unit_of_measurement")))
+            add_web(data, *self.blnet_web.fetch(node))
         if self.blnet_direct:
-            direct = self.blnet_direct.get_latest(self.max_retries)[0]
-            # Override values for analog and digital as values are
-            # expected to be more precise here
-            for domain in ["analog", "digital"]:
-                for id, value in direct[domain].items():
-                    if data[domain].get(id) is not None:
-                        # Keep the web value if the direct one is missing: a
-                        # UVR1611 on CAN sends digital inputs as unused inputs
-                        if value is not None:
-                            data[domain][id]["value"] = value
-                    elif not self.blnet_web:
-                        if value is None:
-                            continue
-                        data[domain][id] = {"value": value}
-                        if domain == "analog":
-                            input_type = direct["analog_types"][id]
-                            data[domain][id]["type"] = input_type
-                            data[domain][id]["unit_of_measurement"] = ANALOG_UNITS.get(input_type)
-
-            for domain in ["speed", "energy", "power"]:
-                for id, value in direct[domain].items():
-                    if value is None:
-                        continue
-                    data[domain][id] = {"value": value, "unit_of_measurement": UNITS[domain]}
+            add_direct(
+                data, self.blnet_direct.get_latest(self.max_retries)[0], self.blnet_web is not None
+            )
         return data
 
     def turn_on(self, digital_id, can_node=None):
@@ -148,21 +116,7 @@ class BLNET(object):
 
     def _turn(self, digital_id, value, can_node=None):
         if self.blnet_web:
-            with self.blnet_web as blnet_session:
-                if not blnet_session.logged_in():
-                    raise ConnectionError("Could not log in")
-                if can_node is not None:
-                    if not blnet_session.set_node(can_node):
-                        raise ConnectionError(
-                            "Could not set can node to {}".format(can_node)
-                        )
-                if not blnet_session.set_digital_value(digital_id, value):
-                    raise ConnectionError(
-                        "Failed to set digital switch {} to value {}".format(
-                            digital_id, value
-                        )
-                    )
-            return True
+            return self.blnet_web.turn(digital_id, value, can_node)
         else:
             raise EnvironmentError("Can't set values with blnet web disabled")
 
@@ -177,21 +131,11 @@ class BLNET(object):
 
 
         """
-        val = None
-        dic = None
         if name is None and id is None:
-            return val
+            return None
         if cached is None:
             cached = self.fetch()
-        for key, v in cached[type].items():
-            # values fetched only via blnet_direct have no name
-            if (name is not None and str(v.get("name")) == str(name)) or (
-                id is not None and str(key) == str(id)
-            ):
-                val = v.get(ret)
-                dic = v
-
-        return val, dic, cached
+        return (*find_value(cached, name, id, type, ret), cached)
 
     def get_digital_value(self, name=None, id=None, cached=None):
         return self.get_value(
@@ -223,15 +167,4 @@ class BLNET(object):
             type="power", ret="value", name=name, id=id, cached=cached
         )
 
-    @staticmethod
-    def _convert_web(values):
-        """
-        Converts data returned by blnet_web to nice data
-        """
-        data = {}
-        try:
-            for sensor in values:
-                data[int(sensor["id"])] = sensor
-        except TypeError:
-            pass
-        return data
+    _convert_web = staticmethod(convert_web)

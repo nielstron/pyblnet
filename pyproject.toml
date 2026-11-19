@@ -30,8 +30,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# the async clients in pyblnet.aio
+async = [
+    "aiohttp>=3.9",
+]
 test = [
     "pytest",
+    "aiohttp>=3.9",
 ]
 
 [ project.urls ]

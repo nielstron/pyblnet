@@ -3,60 +3,36 @@
 """
 Created on 09.08.2018
 
-This is basically a python port of a script by berwinter
-https://github.com/berwinter/uvr1611/blob/master/lib/backend/blnet-connection.inc.php
+The direct connection to the BL-NET over a socket. The protocol is in
+direct_protocol.py, this module runs it.
 
 @author: Niels
 """
-from builtins import str, int
 from socket import socket, getaddrinfo, SOCK_STREAM, IPPROTO_TCP
-import functools
-import struct
 from time import sleep
-from datetime import datetime
 
-from .blnet_parser import BLNETParser
-
-# Constants for the UVR Communication
-CAN_MODE = b"\xDC"
-DL_MODE = b"\xA8"
-DL2_MODE = b"\xD1"
-GET_MODE = b"\x81"
-GET_HEADER = b"\xAA"
-GET_LATEST = 0xAB
-READ_DATA = 0xAC
-END_READ = b"\xAD"
-RESET_DATA = b"\xAF"
-WAIT_TIME = 0xBA
-# Seconds to wait when the BL-Net has no new data yet. Real devices answer
-# GET_LATEST with "no data" for up to about 5 seconds after a read.
-NO_DATA_WAIT = 2
-MAX_RETRYS = 10
-# Length of a WAIT_TIME reply: 0xBA, seconds to wait, checksum
-WAIT_SIZE = 3
-DATASET_SIZE = 61
-LATEST_SIZE = 56
-
-
-def _reset_on_error(method):
-    """
-    Close the connection and forget the read state if a read fails,
-    so that the next call starts with a fresh connection.
-    Malformed replies are raised as ConnectionError.
-    """
-
-    @functools.wraps(method)
-    def wrapper(self, *args, **kwargs):
-        try:
-            return method(self, *args, **kwargs)
-        except (struct.error, IndexError, ValueError) as ex:
-            self._reset()
-            raise ConnectionError(f"Invalid reply from BL-Net: {ex}") from ex
-        except BaseException:
-            self._reset()
-            raise
-
-    return wrapper
+from .direct_protocol import (  # noqa: F401, the constants used to live here
+    CAN_MODE,
+    DL_MODE,
+    DL2_MODE,
+    END_READ,
+    GET_HEADER,
+    GET_LATEST,
+    GET_MODE,
+    INVALID_REPLY_ERRORS,
+    MAX_RETRYS,
+    NO_DATA_WAIT,
+    READ_DATA,
+    RESET_DATA,
+    WAIT_TIME,
+    Connect,
+    DirectProtocol,
+    Disconnect,
+    Receive,
+    Send,
+    Sleep,
+)
+from .flow import run_sync
 
 
 class BLNETDirect(object):
@@ -84,102 +60,38 @@ class BLNETDirect(object):
         self.reset = reset
         # 0 would make the socket non-blocking, treat it like None (no timeout)
         self._timeout = timeout or None
-        self._mode = None
         self._socket = None
-        self._count = None
+        self.protocol = DirectProtocol(reset)
         self._check_mode()
 
-    @_reset_on_error
-    def get_count(self):
+    def _run(self, flow):
         """
-        Get the number of datasets in the bootloader memory
-        @return number of datasets in bootloader memory
+        Run a flow of the protocol. If it fails, close the connection and
+        forget the read state, so that the next call starts afresh.
+        Malformed replies are raised as ConnectionError.
         """
-        if not self._count:
+        try:
+            return run_sync(flow, self._perform)
+        except INVALID_REPLY_ERRORS as ex:
+            self._reset()
+            raise ConnectionError(f"Invalid reply from BL-Net: {ex}") from ex
+        except BaseException:
+            self._reset()
+            raise
+
+    def _perform(self, operation):
+        if isinstance(operation, Send):
+            self._socket.sendall(operation.data)
+        elif isinstance(operation, Receive):
+            return self._socket.recv(operation.max_size)
+        elif isinstance(operation, Sleep):
+            sleep(operation.seconds)
+        elif isinstance(operation, Connect):
             self._connect()
-            data = self._query(GET_HEADER, 21)
-
-            if self._checksum(data):
-                if self._mode == CAN_MODE:
-                    frame_count = struct.unpack("<{}B".format(len(data)), data)[5]
-                    (
-                        type,
-                        version,
-                        timestamp,
-                        frame_count,
-                        _,
-                        start_address,
-                        end_address,
-                        checksum,
-                    ) = struct.unpack("<BB3sB{}s3s3sB".format(frame_count), data)
-                    self._address_inc = 64 * frame_count
-                    self._can_frames = frame_count
-                    self._actual_size = 57
-                    self._fetch_size = 4 + 61 * frame_count
-                elif self._mode == DL_MODE:
-                    (_, device, start_address, end_address, checksum) = struct.unpack(
-                        "<5sB3s3sB", data
-                    )
-                    self._address_inc = 64
-                    self._can_frames = 1
-                    self._actual_size = 57
-                    self._fetch_size = 65
-                elif self._mode == DL2_MODE:
-                    (_, device, start_address, end_address, checksum) = struct.unpack(
-                        "<5s2s3s3sB", data
-                    )
-                    self._address_inc = 128
-                    self._can_frames = 1
-                    self._actual_size = 113
-                    self._fetch_size = 126
-
-                self._address_end = (0x07FFFF // self._address_inc) * self._address_inc
-
-                # check address validity
-                if start_address != b"0xFFFFFF" and end_address != b"0xFFFFFF":
-                    start_address = int.from_bytes(start_address, byteorder="little")
-                    end_address = int.from_bytes(end_address, byteorder="little")
-                    # fix addresses
-                    if end_address > start_address:
-                        # calculate count
-                        self._count = (
-                            (end_address - start_address) / self._address_inc
-                        ) + 1
-                    else:
-                        self._count = (
-                            self._address_end + start_address - end_address
-                        ) / self._address_inc
-                    self._address = end_address
-        if self._count:
-            self._count = int(self._count)
-            return self._count
+        elif isinstance(operation, Disconnect):
+            self._disconnect()
         else:
-            raise ConnectionError("Could not retreive count")
-
-    @_reset_on_error
-    def _get_data(self, max_count=None):
-        data = []
-        count = self._start_read()
-        if isinstance(max_count, int):
-            count = min(max_count, count)
-        for _ in range(0, count):
-            data.append(self._fetch_data())
-        self._end_read(True)
-        return data
-
-    @_reset_on_error
-    def _check_mode(self):
-        """
-        Check if Bootloader Mode is supported
-        @throws ConnectionError Mode not supported
-        """
-        self._connect()
-        self._mode = self._query(GET_MODE, 1)
-        self._disconnect()
-
-        if self._mode in [CAN_MODE, DL2_MODE, DL_MODE]:
-            return True
-        raise ConnectionError("BL-Net mode is not supported")
+            raise TypeError(f"Unknown operation {operation}")
 
     def _connect(self):
         """
@@ -187,9 +99,7 @@ class BLNETDirect(object):
         @throws ConnectionError Connection failed
         """
         if self._socket is None:
-            available = getaddrinfo(
-                self.address, self.port, 0, SOCK_STREAM, IPPROTO_TCP
-            )
+            available = getaddrinfo(self.address, self.port, 0, SOCK_STREAM, IPPROTO_TCP)
             for (family, socktype, proto, _, sockaddr) in available:
                 try:
                     self._socket = socket(family, socktype, proto)
@@ -215,169 +125,29 @@ class BLNETDirect(object):
         """
         if self._socket is not None:
             self._disconnect()
-        self._count = None
-        self._address = None
+        self.protocol.forget()
 
-    def _query(self, command, length):
-        """
-        Send a command to the bootloader and wait for the response
-        if response is less then 32 bytes long return immediately
-        @param commmand: string only ascii (needs byte length == string length)
-        @param length: int length of response
-        @throws ConnectionError BL-Net closed the connection
-        @return Binary: byte string
-        """
-        self._socket.sendall(command)
-        data = b""
-        # get response until length or less than 32 bytes
-        while True:
-            received = self._socket.recv(length)
-            if not received:
-                raise ConnectionError("BL-Net closed the connection")
-            data += received
-            if len(data) <= 32 or len(data) >= length:
-                break
-        return data
+    @property
+    def _mode(self):
+        return self.protocol.mode
 
-    def _recv_exact(self, length):
+    def _check_mode(self):
         """
-        Receive exactly length bytes
-        @throws ConnectionError BL-Net closed the connection
-        @return Binary: byte string
+        Check if Bootloader Mode is supported
+        @throws ConnectionError Mode not supported
         """
-        data = b""
-        while len(data) < length:
-            received = self._socket.recv(length - len(data))
-            if not received:
-                raise ConnectionError("BL-Net closed the connection")
-            data += received
-        return data
+        return self._run(self.protocol.check_mode())
 
-    def _query_latest(self, command):
+    def get_count(self):
         """
-        Send a GET_LATEST command and receive the complete reply.
-        The BL-Net may send a reply in several TCP segments, so the length
-        is derived from its first byte and the reply is read completely.
-        Reading only part of it would leave the rest in the socket and
-        shift every following reply by some bytes.
-        @return Binary: byte string, a "no data", "wait" or data reply
+        Get the number of datasets in the bootloader memory
+        @return number of datasets in bootloader memory
         """
-        self._socket.sendall(command)
-        first = self._recv_exact(1)
-        if first[0] == GET_LATEST:
-            # no new data available yet
-            return first
-        if first[0] == WAIT_TIME:
-            return first + self._recv_exact(WAIT_SIZE - 1)
-        return first + self._recv_exact(self._actual_size - 1)
+        return self._run(self.protocol.get_count())
 
-    def _start_read(self):
-        """
-        Start to read on the bootloader
-        @return number of frames available
-        """
-        return self.get_count()
+    def _get_data(self, max_count=None):
+        return self._run(self.protocol.get_data(max_count))
 
-    def _checksum(self, data):
-        """
-        Verify the checksum
-        @param byte string $data Binary string to check
-        @return boolean
-        """
-        binary = struct.unpack("<{}B".format(len(data)), data)
-        checksum = binary[-1]
-
-        sum = 0
-        # build sum
-        for byte in binary[:-1]:
-            sum += byte
-        # verify
-        return sum % 256 == checksum
-
-    def _fetch_data(self):
-        """
-        Fetch datasets from bootloader memory
-        @throws: ConnectionError Data could not be retreived
-        @return Array of frame -> value mappings
-        """
-        if self._count and self._count > 0:
-            self._connect()
-
-            # build address for bootloader
-            addresses = [
-                self._address & 0xFF,
-                (self._address & 0x7F00) >> 7,
-                (self._address & 0xFF8000) >> 15,
-            ]
-
-            # build command
-            command = struct.pack(
-                "<6B",
-                READ_DATA,
-                addresses[0],
-                addresses[1],
-                addresses[2],
-                1,
-                (READ_DATA + 1 + sum(addresses)) % 256,
-            )
-
-            data = self._query(command, self._fetch_size)
-
-            if self._checksum(data):
-                # increment address
-                self._address -= self._address_inc
-                if self._address < 0:
-                    self._address = self._address_end
-                self._count -= 1
-                return self._split_datasets(data)
-            raise ConnectionError("Could not retreive data")
-
-    def _split_datasets(self, data):
-        """
-        split binary string in datasets and parse dataset values
-        @param data: byte string
-        @return Array of frame -> value mappings
-        """
-        frames = {}
-        if self._mode == CAN_MODE:
-            for frame in range(0, self._can_frames):
-                frames[frame] = BLNETParser(
-                    data[3 + DATASET_SIZE * frame : 3 + DATASET_SIZE * (frame + 1)]
-                )
-        elif self._mode == DL_MODE:
-            frames[0] = BLNETParser(data[:DATASET_SIZE])
-        elif self._mode == DL2_MODE:
-            frames[0] = BLNETParser(data[:DATASET_SIZE])
-            frames[1] = BLNETParser(
-                data[3 + DATASET_SIZE : 3 + DATASET_SIZE + DATASET_SIZE]
-            )
-
-        start = 0
-
-        if self._mode == CAN_MODE:
-            start = 3
-        if data[start : start + DATASET_SIZE - 6] == b"0x00" * (DATASET_SIZE - 6):
-            return False
-        else:
-            return {k: v.to_dict() for k, v in frames.items()}
-
-    def _end_read(self, success=True):
-        """
-        End read, reset memory on bootloader
-        """
-        self._connect()
-        # Send end read command
-        if self._query(END_READ, 1) != END_READ:
-            raise ConnectionError("End read command failed")
-        # reset data if configured
-        if success and self.reset:
-            if self._query(RESET_DATA, 1) != RESET_DATA:
-                raise ConnectionError("Reset memory failed")
-        self._count = None
-        self._address = None
-        self._disconnect()
-
-    @_reset_on_error
     def get_latest(self, max_retries=MAX_RETRYS):
         """
         Fetch latest (current) data from the BLNet
@@ -385,66 +155,4 @@ class BLNETDirect(object):
         @throws ConnectionError could not get data from BLNet
         @return Array of frame -> value mappings
         """
-        self._connect()
-        self.get_count()
-        frames = {}
-        info = {"sleep": {}, "got": {}, "timeout": []}
-
-        # for all frames
-        for frame in range(0, self._can_frames):
-            # build command
-            command = struct.pack("<2B", GET_LATEST, frame + 1)
-            # try 4 times
-            sleeps = []
-            for n in range(0, max_retries):
-                data = self._query_latest(command)
-
-                if data == bytes([GET_LATEST]):
-                    # no new data available yet ("Synchronisation" in TA's spec)
-                    sleep(NO_DATA_WAIT)
-                elif self._checksum(data):
-                    binary = struct.unpack("<{}".format("B" * len(data)), data)
-
-                    if binary[0] == WAIT_TIME:
-                        sleeps.append(binary[1])
-                        self._disconnect()
-                        # wait some seconds
-                        sleep(binary[1])
-                        self._connect()
-                    else:
-                        info["got"][frame] = n
-                        frames.update(self._split_latest(data, frame))
-                        break
-                else:
-                    # Unexpected bytes may still be on their way, reconnect
-                    # so that they can't end up in the next reply
-                    self._disconnect()
-                    self._connect()
-            else:
-                # BL-Net did not send data for this frame within max_retries
-                info["timeout"].append(frame)
-            info["sleep"][frame] = sleeps
-        self._end_read(True)
-        if len(frames) > 0:
-            frames["date"] = datetime.now()
-            frames["info"] = info
-            return frames
-        raise ConnectionError("Could not get latest data")
-
-    def _split_latest(self, data, frame):
-        """
-        Split binary string by fetch latest
-        @param data: bytestring
-        @param frame: int
-        @return Array of frame -> value mappings
-        """
-        frames = {}
-        if self._mode == CAN_MODE:
-            frames[frame] = BLNETParser(data[1 : LATEST_SIZE + 1])
-        elif self._mode == DL_MODE:
-            frames[0] = BLNETParser(data[1 : LATEST_SIZE + 1])
-        elif self._mode == DL2_MODE:
-            frames[0] = BLNETParser(data[1 : LATEST_SIZE + 1])
-            frames[1] = BLNETParser(data[LATEST_SIZE + 1 : 2 * LATEST_SIZE + 1])
-
-        return {k: v.to_dict() for k, v in frames.items()}
+        return self._run(self.protocol.get_latest(max_retries))

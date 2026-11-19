@@ -1,7 +1,7 @@
 # PyBLNET - a very basic python BL-NET bridge
 [![PyPI - Version](https://img.shields.io/pypi/v/pyblnet)](https://pypi.org/project/PyBLNET/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pyblnet)](https://pypi.org/project/PyBLNET/)
-[![Build status](https://github.com/nielstron/pyblnet/actions/workflows/build.yml/badge.svg)](https://github.com/nielstron/pyblnet/actions/workflows/build.yml)
+[![Build status](https://github.com/PyBLNET/pyblnet/actions/workflows/build.yml/badge.svg)](https://github.com/PyBLNET/pyblnet/actions/workflows/build.yml)
 [![Coverage Status](https://coveralls.io/repos/github/PyBLNET/pyblnet/badge.svg?branch=master)](https://coveralls.io/github/PyBLNET/pyblnet?branch=master)
 
 A package that connects to the BL-NET that is connected itself to a UVR1611 device by Technische Alternative. 
@@ -66,5 +66,34 @@ print(blnet.get_latest())
 print(blnet._get_data(1))
 ```
 
+
+### Async usage
+
+`pyblnet.aio` has the same classes with awaitable methods, for asyncio applications like Home Assistant.
+It needs `aiohttp`: `pip install pyblnet[async]`.
+The constructors don't connect, use `create()` to connect and check the BL-NET.
+
+```python
+import asyncio
+import aiohttp
+from pyblnet import aio
+
+async def main():
+    async with aiohttp.ClientSession() as session:
+        blnet = await aio.BLNET.create(ip, session=session, password='pass', timeout=5)
+        print(await blnet.fetch())
+        await blnet.turn_auto(10)
+
+asyncio.run(main())
+```
+
+### How it is built
+
+Both the blocking and the async clients run the same protocol code, so they behave the same.
+`web_protocol.py` and `direct_protocol.py` contain the protocols without any I/O:
+the parsing, and the requests to log in, read and set values written as generators,
+which yield the requests or bytes they need and get the replies sent back ("sans-I/O").
+`BLNETWeb`, `BLNETDirect` and `BLNET` run them with `requests` and sockets,
+`pyblnet.aio` with `aiohttp` and asyncio streams (see `flow.py`).
 
 [1] Technische Alternative, "Schnittstelle Winsol <> Bootloader" (2006), archived copy: http://web.archive.org/web/20160122124754/http://www.haus-terra.at:80/heizung/download/Schnittstelle/Schnittstelle_PC_Bootloader.pdf

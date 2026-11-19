@@ -24,7 +24,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install coverage coveralls pytest
-        pip install -e .
+        pip install -e .[async]
     - name: Run tests
       run: coverage run --source=pyblnet -m pytest tests
     - name: Coverage report
