@@ -15,7 +15,7 @@ from ..protocol.direct import (
     INVALID_REPLY_ERRORS,
     MAX_RETRYS,
     Connect,
-    DirectProtocol,
+    Protocol,
     Disconnect,
     Receive,
     Send,
@@ -24,7 +24,7 @@ from ..protocol.direct import (
 from ..protocol.flow import run_sync
 
 
-class DirectClient(object):
+class Client(object):
     """
     A class for establishing a direct connection to the BLNET (rather than
     scraping the web interface)
@@ -50,7 +50,7 @@ class DirectClient(object):
         # 0 would make the socket non-blocking, treat it like None (no timeout)
         self._timeout = timeout or None
         self._socket = None
-        self.protocol = DirectProtocol(reset)
+        self.protocol = Protocol(reset)
         self._check_mode()
 
     def _run(self, flow):

@@ -7,7 +7,7 @@ import aiohttp
 from yarl import URL
 
 from ..protocol.flow import run_async
-from ..protocol.web import Response, TransportError, WebProtocol, probe
+from ..protocol.web import Protocol, Response, TransportError, probe
 
 
 def _with_scheme(ip):
@@ -45,8 +45,8 @@ async def blnet_test(session, ip, timeout=5):
     return await run_async(probe(), _performer(session, _with_scheme(ip), timeout))
 
 
-class WebClient:
-    """The web interface of the BL-NET, see pyblnet.sync.WebClient"""
+class Client:
+    """The web interface of the BL-NET, see pyblnet.sync.web.Client"""
 
     _def_password = "0128"  # default password is 0128
 
@@ -56,16 +56,16 @@ class WebClient:
         assert password is None or isinstance(password, str)
         assert timeout is None or isinstance(timeout, int)
         self.ip = _with_scheme(ip)
-        self.protocol = WebProtocol(password)
+        self.protocol = Protocol(password)
         self._perform = _performer(session, self.ip, timeout)
 
     @classmethod
     async def create(cls, ip, session, password=_def_password, timeout=5):
         """Raises ValueError if no BL-NET answers under ip"""
-        web = cls(ip, session, password, timeout)
-        if not await run_async(probe(), web._perform):
-            raise ValueError("No BLNET found under given address: {}".format(web.ip))
-        return web
+        client = cls(ip, session, password, timeout)
+        if not await run_async(probe(), client._perform):
+            raise ValueError("No BLNET found under given address: {}".format(client.ip))
+        return client
 
     async def _run(self, flow):
         return await run_async(flow, self._perform)

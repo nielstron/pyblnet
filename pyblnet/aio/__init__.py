@@ -2,7 +2,7 @@
 Async clients for the BL-NET, with the API of the blocking ones, but
 awaitable methods and no I/O in the constructors: use the create()
 class methods to connect and check the BL-NET like the constructors of
-pyblnet.sync.Client, WebClient and DirectClient do.
+pyblnet.sync.Client, web.Client and direct.Client do.
 
 Needs aiohttp: pip install pyblnet[async]
 
@@ -16,7 +16,7 @@ Pass a session that doesn't share its cookies with other BL-NETs.
 """
 
 from .client import Client
-from .direct import DirectClient
-from .web import WebClient, blnet_test
+from . import direct, web
+from .web import blnet_test
 
-__all__ = ["Client", "DirectClient", "WebClient", "blnet_test"]
+__all__ = ["Client", "blnet_test", "direct", "web"]

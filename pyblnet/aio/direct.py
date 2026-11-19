@@ -8,7 +8,7 @@ from ..protocol.direct import (
     INVALID_REPLY_ERRORS,
     MAX_RETRYS,
     Connect,
-    DirectProtocol,
+    Protocol,
     Disconnect,
     Receive,
     Send,
@@ -17,8 +17,8 @@ from ..protocol.direct import (
 from ..protocol.flow import run_async
 
 
-class DirectClient:
-    """The direct connection (TA port) of the BL-NET, see pyblnet.sync.DirectClient"""
+class Client:
+    """The direct connection (TA port) of the BL-NET, see pyblnet.sync.direct.Client"""
 
     def __init__(self, address, port: int = 40000, reset: bool = False, timeout: float = 60):
         """Doesn't connect, use create() for that"""
@@ -31,14 +31,14 @@ class DirectClient:
         self._timeout = timeout or None
         self._reader = None
         self._writer = None
-        self.protocol = DirectProtocol(reset)
+        self.protocol = Protocol(reset)
 
     @classmethod
     async def create(cls, address, port: int = 40000, reset: bool = False, timeout: float = 60):
         """Raises ConnectionError if the BL-NET mode is not supported"""
-        direct = cls(address, port, reset, timeout)
-        await direct._run(direct.protocol.check_mode())
-        return direct
+        client = cls(address, port, reset, timeout)
+        await client._run(client.protocol.check_mode())
+        return client
 
     async def _run(self, flow):
         """

@@ -13,7 +13,7 @@ runs it with requests.
 import requests
 
 from ..protocol.flow import run_sync
-from ..protocol.web import Response, TransportError, WebProtocol, probe
+from ..protocol.web import Protocol, Response, TransportError, probe
 
 
 def _performer(base_url, timeout):
@@ -50,7 +50,7 @@ def blnet_test(ip, timeout=5, id=0):
     return run_sync(probe(), _performer(_with_scheme(ip), timeout))
 
 
-class WebClient(object):
+class Client(object):
     """
     Interface for connecting with, collecting data from and controlling the BLNet
     via it's HTTP-interface
@@ -74,7 +74,7 @@ class WebClient(object):
             raise ValueError("No BLNET found under given address: {}".format(ip))
         self.ip = ip
         self._timeout = timeout
-        self.protocol = WebProtocol(password)
+        self.protocol = Protocol(password)
 
     @property
     def password(self):

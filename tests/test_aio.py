@@ -53,10 +53,10 @@ class AsyncWebTest(unittest.IsolatedAsyncioTestCase):
         self.server_control.stop_server()
         self.assertFalse(await aio.blnet_test(self.session, self.url, timeout=2))
         with self.assertRaises(ValueError):
-            await aio.WebClient.create(self.url, self.session)
+            await aio.web.Client.create(self.url, self.session)
 
     async def test_log_in(self):
-        blnet = await aio.WebClient.create(
+        blnet = await aio.web.Client.create(
             "{}:{}".format(ADDRESS, self.port), self.session, password=PASSWORD, timeout=10
         )
         async with blnet:
@@ -64,7 +64,7 @@ class AsyncWebTest(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(await blnet.logged_in())
 
     async def test_read_values(self):
-        blnet = await aio.WebClient.create(self.url, self.session, password=PASSWORD, timeout=10)
+        blnet = await aio.web.Client.create(self.url, self.session, password=PASSWORD, timeout=10)
         async with blnet:
             self.assertEqual(await blnet.read_analog_values(), STATE_ANALOG)
             self.assertEqual(await blnet.read_digital_values(), STATE_DIGITAL)
@@ -187,10 +187,10 @@ class AsyncDirectTest(unittest.IsolatedAsyncioTestCase):
     async def test_connection_refused(self):
         self.tearDown()
         with self.assertRaises(ConnectionError):
-            await aio.DirectClient.create(ADDRESS, self.port, timeout=1)
+            await aio.direct.Client.create(ADDRESS, self.port, timeout=1)
         self.setUp()
 
     async def test_read_logged_data_raises_on_invalid_reply(self):
-        direct = await aio.DirectClient.create(ADDRESS, self.port, timeout=1)
+        client = await aio.direct.Client.create(ADDRESS, self.port, timeout=1)
         with self.assertRaises(ConnectionError):
-            await direct.get_data(1)
+            await client.get_data(1)

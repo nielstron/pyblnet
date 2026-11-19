@@ -11,8 +11,7 @@ as possible.
 @author: Niels
 """
 from ..protocol.values import add_direct, add_web, convert_web, empty_data, find_value
-from .direct import DirectClient
-from .web import WebClient
+from . import direct, web
 
 from urllib.parse import urlparse
 
@@ -61,7 +60,7 @@ class Client(object):
         self.web = None
         self.direct = None
         if use_web:
-            self.web = WebClient(
+            self.web = web.Client(
                 "{}:{}".format(address, web_port), password, timeout
             )
         if use_ta:
@@ -69,7 +68,7 @@ class Client(object):
             # especially not if not prefixed with http://
             # see https://docs.python.org/3/library/urllib.parse.html#urllib.parse.urlparse
             host = urlparse(address).hostname or address
-            self.direct = DirectClient(host, ta_port, timeout=timeout)
+            self.direct = direct.Client(host, ta_port, timeout=timeout)
 
     def fetch(self, node=None):
         """

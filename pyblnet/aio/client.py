@@ -4,8 +4,7 @@ from __future__ import annotations
 from urllib.parse import urlparse
 
 from ..protocol.values import add_direct, add_web, empty_data, find_value
-from .direct import DirectClient
-from .web import WebClient
+from . import direct, web
 
 
 class Client:
@@ -15,10 +14,10 @@ class Client:
     web interface.
     """
 
-    def __init__(self, web=None, direct=None, max_retries=5):
+    def __init__(self, web_client=None, direct_client=None, max_retries=5):
         """Use create()"""
-        self.web = web
-        self.direct = direct
+        self.web = web_client
+        self.direct = direct_client
         self.max_retries = max_retries
 
     @classmethod
@@ -35,17 +34,17 @@ class Client:
         use_ta=False,
     ):
         assert isinstance(address, str)
-        web = direct = None
+        web_client = direct_client = None
         if use_web:
             if session is None:
                 raise ValueError("The web interface needs an aiohttp session")
-            web = await WebClient.create(
+            web_client = await web.Client.create(
                 "{}:{}".format(address, web_port), session, password, timeout
             )
         if use_ta:
             host = urlparse(address).hostname or address
-            direct = await DirectClient.create(host, ta_port, timeout=timeout)
-        return cls(web, direct, max_retries)
+            direct_client = await direct.Client.create(host, ta_port, timeout=timeout)
+        return cls(web_client, direct_client, max_retries)
 
     async def close(self):
         """Close the direct connection, if open"""

@@ -5,7 +5,8 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from pyblnet import Client, WebClient, blnet_test
+from pyblnet import Client, blnet_test
+from pyblnet.sync import web
 from pyblnet.protocol.parser import Parser
 
 PAGES = Path(__file__).parent / "test_structure"
@@ -23,7 +24,7 @@ def serve(name):
 class WebPagesTest(unittest.TestCase):
     def setUp(self):
         with serve("main.htm"):
-            self.web = WebClient("blnet", password=None)
+            self.web = web.Client("blnet", password=None)
 
     def test_blnet_test_recognizes_main_page(self):
         with serve("main.htm"):
@@ -85,7 +86,7 @@ class WebPagesTest(unittest.TestCase):
         with serve("main.htm"):
             blnet = Client("blnet")
         with serve("580500.digital_inputs.htm"), mock.patch.object(
-            WebClient, "read_digital_values", return_value=[]
+            web.Client, "read_digital_values", return_value=[]
         ):
             data = blnet.fetch()
         self.assertEqual(data["analog"][8]["type"], "digital")
@@ -102,7 +103,7 @@ class WebPagesTest(unittest.TestCase):
             blnet = Client("blnet")
         blnet.direct = mock.Mock(get_latest=mock.Mock(return_value={0: direct}))
         with serve("580500.digital_inputs.htm"), mock.patch.object(
-            WebClient, "read_digital_values", return_value=[]
+            web.Client, "read_digital_values", return_value=[]
         ):
             data = blnet.fetch()
         self.assertEqual(data["analog"][13]["value"], "1")

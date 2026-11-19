@@ -1,7 +1,7 @@
 """
 The direct connection (TA port, PC-BLNET protocol) of the BL-NET without
 I/O: the commands, how to read their replies, and the reads as flows (see
-flow.py). pyblnet.sync.DirectClient runs them with a socket, pyblnet.aio.DirectClient with
+flow.py). pyblnet.sync.direct.Client runs them with a socket, pyblnet.aio.direct.Client with
 asyncio streams.
 
 This is basically a python port of a script by berwinter
@@ -79,7 +79,7 @@ def checksum_ok(data):
     return sum(binary[:-1]) % 256 == binary[-1]
 
 
-class DirectProtocol:
+class Protocol:
     """
     The state of a direct connection and the flows reading from it.
     The clients reset it (and close the connection) when a flow fails.

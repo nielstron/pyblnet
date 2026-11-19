@@ -10,21 +10,22 @@ It is able to read digital and analog values as well as to set switches to ON/OF
 Documentation on the modules and their methods can be found with the methods and modules themselves.
 
 Two interfaces to BLNet exist and both are supported:
-- Webinterface  - Class WebClient
-- BLNet-Direct protocol [1] - Class DirectClient
+- Webinterface  - pyblnet.sync.web.Client
+- BLNet-Direct protocol [1] - pyblnet.sync.direct.Client
 
 However, as of now, there is no testing on the BLNet-Direct protocol *of any kind*, so enabling it is discouraged until the interface is fixed.
 Parsing the data via the web interface is the preferred way of accessing the BLNet for now.
 
 The class Client is a wrapper around the two classes. When initializing the class, the two interfaces can be activated/deactivated. 
-DirectClient provides 'analog', 'digital',  'speed', 'energy', 'power', whereas WebClient supports 'analog' and 'digital' only.
-If both are active, DirectClient has priority.
-Setting switches and reading their manual/auto state is only possible via the WebClient interface.
+The direct connection provides 'analog', 'digital',  'speed', 'energy', 'power', whereas the web interface supports 'analog' and 'digital' only.
+If both are active, the direct connection has priority.
+Setting switches and reading their manual/auto state is only possible via the web interface.
 
 ### Usage
 
 ```python
-from pyblnet import blnet_test, Client, WebClient, DirectClient
+from pyblnet import blnet_test, Client
+from pyblnet.sync import direct, web
 
 ip = '192.168.178.10'
 
@@ -48,7 +49,7 @@ print(blnet.fetch())
 # Fetch the latest data via web interface
 # Note that manual log in and log out are required
 # when not using the with statement
-with WebClient(ip, password='pass', timeout=5) as blnet_session:
+with web.Client(ip, password='pass', timeout=5) as blnet_session:
     print(blnet_session.read_analog_values())
     print(blnet_session.read_digital_values())
 
@@ -59,7 +60,7 @@ with WebClient(ip, password='pass', timeout=5) as blnet_session:
     # this is handled automatically when using the with statement
 
 # Fetch data via the Protocol developed by TA
-blnet = DirectClient(ip)
+blnet = direct.Client(ip)
 # Fetching the latest data
 print(blnet.get_latest())
 # Still inofficial because unexplicably failing often

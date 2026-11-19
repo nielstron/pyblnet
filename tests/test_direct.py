@@ -9,7 +9,8 @@ import unittest
 import warnings
 from unittest import mock
 
-from pyblnet import Client, DirectClient
+from pyblnet import Client
+from pyblnet.sync import direct
 from tests.test_structure.blnet_direct_mock_server import (
     BLNETDirectServer,
     DL_LATEST_RESPONSE,
@@ -86,7 +87,7 @@ class BLNETDirectOnlyTest(unittest.TestCase):
         self.assertEqual(data["energy"][1]["value"], 362847.4)
 
     def test_timeout_does_not_change_global_socket_timeout(self):
-        DirectClient(ADDRESS, self.port, timeout=7)
+        direct.Client(ADDRESS, self.port, timeout=7)
         self.assertIsNone(socket.getdefaulttimeout())
 
     def test_failed_connection_attempt_closes_socket(self):
@@ -102,7 +103,7 @@ class BLNETDirectOnlyTest(unittest.TestCase):
         with mock.patch("pyblnet.sync.direct.getaddrinfo", return_value=addresses):
             with warnings.catch_warnings(record=True) as caught:
                 warnings.simplefilter("always", ResourceWarning)
-                DirectClient(ADDRESS, self.port, timeout=7)
+                direct.Client(ADDRESS, self.port, timeout=7)
                 gc.collect()
         self.assertEqual([w for w in caught if w.category is ResourceWarning], [])
 
@@ -142,20 +143,20 @@ class BLNETDirectOnlyTest(unittest.TestCase):
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always", ResourceWarning)
             with self.assertRaises(socket.timeout):
-                DirectClient(ADDRESS, self.port, timeout=1)
+                direct.Client(ADDRESS, self.port, timeout=1)
             gc.collect()
         self.assertEqual([w for w in caught if w.category is ResourceWarning], [])
 
     def test_read_logged_data_raises_when_blnet_hangs_up(self):
-        direct = DirectClient(ADDRESS, self.port, timeout=1)
+        client = direct.Client(ADDRESS, self.port, timeout=1)
         self.server.close_on = READ_DATA
         with self.assertRaises(ConnectionError):
-            direct._get_data(1)
+            client._get_data(1)
 
     def test_read_logged_data_raises_on_invalid_reply(self):
-        direct = DirectClient(ADDRESS, self.port, timeout=1)
+        client = direct.Client(ADDRESS, self.port, timeout=1)
         with self.assertRaises(ConnectionError):
-            direct._get_data(1)
+            client._get_data(1)
 
     def test_fetch_waits_while_blnet_has_no_new_data(self):
         # Real BL-NETs answer "no data" for up to a few seconds after a read
